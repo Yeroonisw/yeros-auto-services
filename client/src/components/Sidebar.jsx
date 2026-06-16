@@ -4,6 +4,7 @@ import {
   Bot,
   CarFront,
   ClipboardList,
+  Activity,
   FileText,
   Gauge,
   LogOut,
@@ -19,6 +20,7 @@ const links = [
   { to: "/vehicles", label: "Vehicles", icon: CarFront },
   { to: "/estimates", label: "Estimates", icon: FileText },
   { to: "/work-orders", label: "Work orders", icon: ClipboardList },
+  { to: "/scanner-reports", label: "Scanner reports", icon: Activity },
   { to: "/assistant", label: "AI diagnostics", icon: Bot },
   { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
 ];

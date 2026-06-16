@@ -3,6 +3,7 @@ import Vehicle from "../models/Vehicle.js";
 import Customer from "../models/Customer.js";
 import WorkOrder from "../models/WorkOrder.js";
 import Estimate from "../models/Estimate.js";
+import ScannerReport from "../models/ScannerReport.js";
 
 const router = express.Router();
 
@@ -19,11 +20,12 @@ router.get("/:id", async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findById(req.params.id).populate("customer", "name phone email address");
     if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
-    const [orders, estimates] = await Promise.all([
+    const [orders, estimates, scannerReports] = await Promise.all([
       WorkOrder.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ openedAt: -1 }),
       Estimate.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ createdAt: -1 }),
+      ScannerReport.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ scanDate: -1 }),
     ]);
-    res.json({ vehicle, orders, estimates });
+    res.json({ vehicle, orders, estimates, scannerReports });
   } catch (error) {
     next(error);
   }
@@ -59,12 +61,13 @@ router.put("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const [order, estimate] = await Promise.all([
+    const [order, estimate, scannerReport] = await Promise.all([
       WorkOrder.exists({ vehicle: req.params.id }),
       Estimate.exists({ vehicle: req.params.id }),
+      ScannerReport.exists({ vehicle: req.params.id }),
     ]);
-    if (order || estimate) {
-      return res.status(409).json({ message: "Delete this vehicle's work orders and estimates first" });
+    if (order || estimate || scannerReport) {
+      return res.status(409).json({ message: "Delete this vehicle's work orders, estimates and scanner reports first" });
     }
     const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
     if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });

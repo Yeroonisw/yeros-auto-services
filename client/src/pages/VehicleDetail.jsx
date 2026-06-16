@@ -47,6 +47,17 @@ export default function VehicleDetail() {
         </article>)}</div> : <Empty>No repairs recorded for this vehicle.</Empty>}
       </section>
       <section className="panel profile-section">
+        <div className="panel-heading"><h2>Scanner reports</h2><p>Autel scan history and diagnostic trouble codes.</p></div>
+        {data.scannerReports?.length ? <div className="vehicle-timeline scanner-timeline">{data.scannerReports.map((report) => <article key={report._id}>
+          <div className="timeline-date"><strong>{new Date(report.scanDate).toLocaleDateString()}</strong><span>{report.scannerModel}</span></div>
+          <div className="timeline-body"><h3>{report.reportNumber}</h3>
+            {report.dtcCodes?.length > 0 && <div className="timeline-dtc">{report.dtcCodes.map((dtc, index) => <span key={`${dtc.code}-${index}`}>{dtc.code}</span>)}</div>}
+            {report.summary && <p>{report.summary}</p>}
+          </div>
+          <strong className="timeline-total">{Number(report.mileage || 0).toLocaleString()} mi</strong>
+        </article>)}</div> : <Empty>No scanner reports recorded for this vehicle.</Empty>}
+      </section>
+      <section className="panel profile-section">
         <div className="panel-heading"><h2>Estimates</h2><p>Quotes associated with this vehicle.</p></div>
         {data.estimates.length ? <div className="profile-list">{data.estimates.map((estimate) => <Link to="/estimates" key={estimate._id}><div><strong>{estimate.estimateNumber}</strong><span>{estimate.status} · {new Date(estimate.createdAt).toLocaleDateString()}</span></div><small>{money.format(estimate.total)}</small></Link>)}</div> : <Empty>No estimates recorded.</Empty>}
       </section>

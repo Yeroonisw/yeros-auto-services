@@ -12,6 +12,7 @@ import dashboardRoutes from "./routes/dashboard.js";
 import estimateRoutes from "./routes/estimates.js";
 import assistantRoutes from "./routes/assistant.js";
 import searchRoutes from "./routes/search.js";
+import scannerReportRoutes from "./routes/scannerReports.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/estimates", requireAuth, estimateRoutes);
   app.use("/api/assistant", requireAuth, assistantRoutes);
   app.use("/api/search", requireAuth, searchRoutes);
+  app.use("/api/scanner-reports", requireAuth, scannerReportRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
     app.use(express.static(clientDistPath));

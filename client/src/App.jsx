@@ -14,6 +14,7 @@ import SearchResults from "./pages/SearchResults.jsx";
 import CustomerDetail from "./pages/CustomerDetail.jsx";
 import VehicleDetail from "./pages/VehicleDetail.jsx";
 import Home from "./pages/Home.jsx";
+import ScannerReports from "./pages/ScannerReports.jsx";
 
 function ProtectedRoute() {
   const { authenticated } = useAuth();
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/vehicles/:id" element={<VehicleDetail />} />
           <Route path="/work-orders" element={<WorkOrders />} />
           <Route path="/work-orders/:id" element={<WorkOrderDetail />} />
+          <Route path="/scanner-reports" element={<ScannerReports />} />
           <Route path="/estimates" element={<Estimates />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />
