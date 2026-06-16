@@ -3,6 +3,7 @@ import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
 import WorkOrder from "../models/WorkOrder.js";
 import ScannerReport from "../models/ScannerReport.js";
+import { extractScannerReportFromPdf } from "../services/scannerPdf.js";
 
 const router = express.Router();
 const populate = [
@@ -37,8 +38,22 @@ function extractReportFile(body) {
 }
 
 function cleanBody(body) {
-  const { reportFileData, reportFileName, ...rest } = body;
+  const { reportFileData, reportFileName, autoFillFromPdf, ...rest } = body;
   return rest;
+}
+
+async function applyPdfAutofill(payload, reportFile, enabled) {
+  if (!reportFile || !enabled) return;
+  try {
+    const extracted = await extractScannerReportFromPdf(reportFile.data);
+    if (extracted.vin && !payload.vin) payload.vin = extracted.vin;
+    if (extracted.mileage && !Number(payload.mileage || 0)) payload.mileage = extracted.mileage;
+    if (extracted.dtcCodes.length && !payload.dtcCodes?.length) payload.dtcCodes = extracted.dtcCodes;
+    if (extracted.rawText && !payload.rawText) payload.rawText = extracted.rawText;
+    if (extracted.summary && !payload.summary) payload.summary = extracted.summary;
+  } catch (error) {
+    payload.summary = [payload.summary, `PDF uploaded, but automatic text extraction failed: ${error.message}`].filter(Boolean).join("\n");
+  }
 }
 
 async function validateRelations(customerId, vehicleId) {
@@ -76,13 +91,14 @@ router.post("/", async (req, res, next) => {
   try {
     const result = await validateRelations(req.body.customer, req.body.vehicle);
     if (result.error) return res.status(400).json({ message: result.error });
-    await syncVehicleFromScan(result.vehicle, req.body);
     const payload = cleanBody(req.body);
     const reportFile = extractReportFile(req.body);
     if (reportFile) {
       payload.reportFile = reportFile;
       payload.sourceFileName = reportFile.fileName;
     }
+    await applyPdfAutofill(payload, reportFile, req.body.autoFillFromPdf !== false);
+    await syncVehicleFromScan(result.vehicle, payload);
     const report = await ScannerReport.create(payload);
     res.status(201).json(await report.populate(populate).then((item) => item.toObject({ virtuals: true, transform: (_, ret) => {
       if (ret.reportFile) delete ret.reportFile.data;
@@ -114,13 +130,14 @@ router.put("/:id", async (req, res, next) => {
     const vehicle = req.body.vehicle || report.vehicle;
     const result = await validateRelations(customer, vehicle);
     if (result.error) return res.status(400).json({ message: result.error });
-    await syncVehicleFromScan(result.vehicle, req.body);
     const payload = cleanBody(req.body);
     const reportFile = extractReportFile(req.body);
     if (reportFile) {
       payload.reportFile = reportFile;
       payload.sourceFileName = reportFile.fileName;
     }
+    await applyPdfAutofill(payload, reportFile, req.body.autoFillFromPdf !== false);
+    await syncVehicleFromScan(result.vehicle, payload);
     Object.assign(report, payload);
     await report.save();
     const populated = await report.populate(populate);

@@ -118,7 +118,7 @@ export default function ScannerReports() {
         ...form,
         scanDate: form.scanDate || null,
         dtcCodes: form.dtcCodes.filter((item) => item.code.trim()),
-        ...(reportFileData ? { reportFileData, reportFileName: reportFile.name } : {}),
+        ...(reportFileData ? { reportFileData, reportFileName: reportFile.name, autoFillFromPdf: true } : {}),
       };
       if (editing) await api.put(`/scanner-reports/${editing._id}`, payload);
       else await api.post("/scanner-reports", payload);
@@ -210,7 +210,7 @@ export default function ScannerReports() {
         <label>Scan date<input type="date" value={form.scanDate} onChange={(event) => setForm({ ...form, scanDate: event.target.value })} /></label>
         <label>VIN<input value={form.vin} onChange={(event) => setForm({ ...form, vin: event.target.value.toUpperCase() })} /></label>
         <label>Mileage<input type="number" min="0" value={form.mileage} onChange={(event) => setForm({ ...form, mileage: Number(event.target.value) })} /></label>
-        <label className="span-2">Upload PDF report<input type="file" accept="application/pdf" onChange={(event) => {
+        <label className="span-2">Upload PDF report and auto-fill<input type="file" accept="application/pdf" onChange={(event) => {
           const file = event.target.files?.[0] || null;
           setReportFile(file);
           if (file) setForm({ ...form, sourceFileName: file.name });
