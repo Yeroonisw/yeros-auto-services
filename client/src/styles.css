@@ -284,6 +284,37 @@ textarea { resize: vertical; }
 .scanner-file-panel strong { color: #243047; word-break: break-word; }
 .scanner-file-panel span { font-size: 11px; }
 .raw-report-panel pre { max-height: 430px; overflow: auto; margin: 0; padding: 20px; color: #334155; background: #fbfcfd; font-size: 11px; line-height: 1.6; white-space: pre-wrap; }
+
+.autel-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.autel-main { display: grid; gap: 20px; }
+.autel-side { position: sticky; top: 88px; }
+.autel-hero { padding: 30px; color: white; border-radius: 16px; background: radial-gradient(circle at top left, rgba(214,40,40,.34), transparent 35%), linear-gradient(135deg, #0f172a, #26364f); box-shadow: 0 13px 35px rgba(17,24,39,.12); }
+.autel-hero svg { color: #ffd1d1; }
+.autel-hero h2 { max-width: 760px; margin: 8px 0; font-size: clamp(28px, 3vw, 40px); letter-spacing: -.04em; }
+.autel-hero p:not(.eyebrow) { max-width: 760px; margin: 0; color: #c6cfdd; line-height: 1.65; }
+.autel-steps { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.autel-steps span { display: inline-flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; background: rgba(255,255,255,.06); color: #d6dee9; font-size: 11px; font-weight: 700; }
+.autel-steps strong { width: 20px; height: 20px; display: grid; place-items: center; color: white; border-radius: 50%; background: var(--red); font-size: 10px; }
+.autel-upload { padding: 20px; }
+.autel-dropzone { min-height: 210px; display: grid; place-items: center; gap: 8px; padding: 28px; border: 2px dashed #cad4e2; border-radius: 14px; background: #fafbfc; color: var(--muted); text-align: center; cursor: pointer; transition: .18s ease; }
+.autel-dropzone:hover { border-color: #8fa2c5; background: #f5f8fc; }
+.autel-dropzone svg { width: 34px; height: 34px; color: var(--red); }
+.autel-dropzone strong, .autel-dropzone span { display: block; }
+.autel-dropzone strong { color: #223047; font-family: "Manrope"; }
+.autel-dropzone span { font-size: 11px; }
+.autel-dropzone input { display: none; }
+.autel-processing { margin: 12px 0 0; color: #3757a6; font-size: 12px; font-weight: 800; }
+.autel-preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 18px 20px 0; }
+.autel-preview-grid article { min-height: 130px; padding: 17px; border: 1px solid var(--border); border-radius: 12px; background: #fafbfc; }
+.autel-preview-grid svg { margin-bottom: 15px; color: var(--red); }
+.autel-preview-grid span, .autel-preview-grid strong { display: block; }
+.autel-preview-grid span { margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.autel-preview-grid strong { color: #1b2638; font-size: 13px; word-break: break-word; }
+.autel-match { display: flex; align-items: center; gap: 8px; margin: 14px 20px 0; padding: 11px 12px; color: #087a52; border: 1px solid #b7ecd8; border-radius: 10px; background: #ecfbf5; font-size: 12px; font-weight: 800; }
+.autel-save-form { display: grid; gap: 15px; padding: 20px; }
+.autel-save-form label { display: grid; gap: 7px; color: #414b5d; font-size: 12px; font-weight: 800; }
+.autel-save-form label svg { color: var(--red); }
+.autel-save-form .button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; }
 .compact-empty { flex: 1; padding: 0; }
 
 .monthly-panel { margin-bottom: 24px; }
@@ -437,6 +468,9 @@ textarea { resize: vertical; }
   .finance-grid { grid-template-columns: 1fr; }
   .scanner-hero { grid-template-columns: 1fr; }
   .scanner-grid { grid-template-columns: 1fr 1fr; }
+  .autel-layout { grid-template-columns: 1fr; }
+  .autel-side { position: static; }
+  .autel-preview-grid { grid-template-columns: 1fr 1fr; }
   .public-header { grid-template-columns: 190px 1fr auto; gap: 18px; padding-inline: 25px; }
   .public-brand img { width: 185px; }
   .public-nav { gap: 18px; }
@@ -525,6 +559,9 @@ textarea { resize: vertical; }
   .scanner-code-table article { grid-template-columns: 1fr; }
   .scanner-code-table small { justify-self: start; }
   .scanner-detail-actions .button { width: 100%; justify-content: center; }
+  .autel-hero { padding: 24px; }
+  .autel-preview-grid { grid-template-columns: 1fr; }
+  .autel-steps { display: grid; grid-template-columns: 1fr; }
   .detail-summary-grid { grid-template-columns: 1fr; }
   .detail-line { grid-template-columns: 1fr 42px 68px; }
   .detail-line > :nth-child(3) { display: none; }

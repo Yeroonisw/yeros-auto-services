@@ -88,6 +88,25 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.post("/preview", async (req, res, next) => {
+  try {
+    const reportFile = extractReportFile(req.body);
+    if (!reportFile) return res.status(400).json({ message: "Upload a PDF scanner report" });
+    const extracted = await extractScannerReportFromPdf(reportFile.data);
+    res.json({
+      ...extracted,
+      sourceFileName: reportFile.fileName,
+      reportFile: {
+        fileName: reportFile.fileName,
+        contentType: reportFile.contentType,
+        size: reportFile.size,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const report = await ScannerReport.findById(req.params.id).select(reportProjection).populate(populate);

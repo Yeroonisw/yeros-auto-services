@@ -185,6 +185,19 @@ test("scanner reports track Autel scans and convert to work orders", async () =>
     "BCM B1000 Body control module stored code",
     "PCM P0300 Random misfire detected",
   ]);
+
+  const preview = await request(app)
+    .post("/api/scanner-reports/preview")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      reportFileName: "autel-test-report.pdf",
+      reportFileData: `data:application/pdf;base64,${autelPdf.toString("base64")}`,
+    })
+    .expect(200);
+  assert.equal(preview.body.vin, "4T1C11AK0NU123456");
+  assert.equal(preview.body.mileage, 25250);
+  assert.deepEqual(preview.body.dtcCodes.map((dtc) => dtc.code), ["P0300", "B1000", "P0420"]);
+
   const created = await request(app)
     .post("/api/scanner-reports")
     .set("Authorization", `Bearer ${token}`)

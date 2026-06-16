@@ -5,6 +5,7 @@ import {
   CarFront,
   ClipboardList,
   Activity,
+  Cloud,
   FileText,
   Gauge,
   LogOut,
@@ -21,6 +22,7 @@ const links = [
   { to: "/estimates", label: "Estimates", icon: FileText },
   { to: "/work-orders", label: "Work orders", icon: ClipboardList },
   { to: "/scanner-reports", label: "Scanner reports", icon: Activity },
+  { to: "/autel-import", label: "Autel import", icon: Cloud },
   { to: "/assistant", label: "AI diagnostics", icon: Bot },
   { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
 ];
