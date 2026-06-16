@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, CarFront, ClipboardPlus, Download, FileScan, Plus, Trash2, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
@@ -18,6 +19,7 @@ const blank = {
 };
 
 export default function ScannerReports() {
+  const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -185,7 +187,7 @@ export default function ScannerReports() {
     {loading ? <Loading /> : reports.length ? <section className="scanner-grid">
       {reports.map((report) => <article className="scanner-card" key={report._id}>
         <header>
-          <div><span>{report.scannerModel}</span><strong>{report.reportNumber}</strong><small>{new Date(report.scanDate).toLocaleDateString()}</small></div>
+          <div><span>{report.scannerModel}</span><button className="record-link" onClick={() => navigate(`/scanner-reports/${report._id}`)}>{report.reportNumber}</button><small>{new Date(report.scanDate).toLocaleDateString()}</small></div>
           <FileScan />
         </header>
         <div className="scanner-car"><CarFront size={17} /><span>{report.vehicle?.year} {report.vehicle?.make} {report.vehicle?.model}</span><small>{report.customer?.name}</small></div>
@@ -194,6 +196,7 @@ export default function ScannerReports() {
         {report.reportFile?.fileName && <small className="scanner-file"><Upload size={13} /> {report.reportFile.fileName}</small>}
         {report.summary && <p className="scanner-summary">{report.summary}</p>}
         <div className="scanner-actions">
+          <button className="text-button view-button" onClick={() => navigate(`/scanner-reports/${report._id}`)}>View</button>
           <button className="text-button" onClick={() => open(report)}>Edit</button>
           {report.reportFile?.fileName && <button className="text-button" onClick={() => downloadReport(report)}><Download size={14} /> PDF</button>}
           <button className="text-button" onClick={() => createWorkOrder(report)} disabled={Boolean(report.convertedWorkOrder)}><ClipboardPlus size={14} /> {report.convertedWorkOrder ? report.convertedWorkOrder.orderNumber : "Create WO"}</button>

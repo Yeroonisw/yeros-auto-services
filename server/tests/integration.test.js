@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import request from "supertest";
+import PDFDocument from "pdfkit";
 
 let mongo;
 let app;
@@ -11,6 +12,18 @@ let customer;
 let vehicle;
 let order;
 let estimate;
+let scannerReport;
+
+function createPdfBuffer(lines) {
+  return new Promise((resolve) => {
+    const doc = new PDFDocument();
+    const chunks = [];
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    for (const line of lines) doc.text(line);
+    doc.end();
+  });
+}
 
 before(async () => {
   process.env.JWT_SECRET = "integration-test-secret";
@@ -117,6 +130,7 @@ test("work order CRUD and totals work", async () => {
       dtcCodes: [{ code: "P0300", description: "Random misfire", status: "active" }],
       labor: 25,
       taxRate: 10,
+      paymentMethod: "Zelle",
     })
     .expect(201);
   order = created.body;
@@ -124,6 +138,7 @@ test("work order CRUD and totals work", async () => {
   assert.equal(order.partsCost, 20);
   assert.equal(order.grossProfit, 55);
   assert.equal(order.dtcCodes[0].code, "P0300");
+  assert.equal(order.paymentMethod, "Zelle");
 
   const updated = await request(app)
     .put(`/api/work-orders/${order._id}`)
@@ -160,20 +175,86 @@ test("customer and vehicle detail pages have related records", async () => {
   assert.equal(vehicleDetail.body.orders.length, 1);
 });
 
+test("scanner reports track Autel scans and convert to work orders", async () => {
+  const autelPdf = await createPdfBuffer([
+    "Autel Diagnostic Report",
+    "Scanner: Autel MK900",
+    "VIN: 4T1C11AK0NU123456",
+    "Odometer Reading: 25,250 mi",
+    "ECM P0420 Catalyst efficiency below threshold",
+    "BCM B1000 Body control module stored code",
+    "PCM P0300 Random misfire detected",
+  ]);
+  const created = await request(app)
+    .post("/api/scanner-reports")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      customer: customer._id,
+      vehicle: vehicle._id,
+      scannerModel: "Autel MK900",
+      sourceFileName: "autel-test-report.pdf",
+      reportFileName: "autel-test-report.pdf",
+      reportFileData: `data:application/pdf;base64,${autelPdf.toString("base64")}`,
+    })
+    .expect(201);
+  scannerReport = created.body;
+  assert.equal(scannerReport.reportNumber, "SCAN-00001");
+  assert.equal(scannerReport.vin, "4T1C11AK0NU123456");
+  assert.equal(scannerReport.mileage, 25250);
+  assert.deepEqual(scannerReport.dtcCodes.map((dtc) => dtc.module), ["PCM", "BCM", "ECM"]);
+  assert.deepEqual(scannerReport.dtcCodes.map((dtc) => dtc.code), ["P0300", "B1000", "P0420"]);
+  assert.equal(scannerReport.reportFile.fileName, "autel-test-report.pdf");
+  assert.equal(scannerReport.reportFile.data, undefined);
+
+  const detail = await request(app)
+    .get(`/api/scanner-reports/${scannerReport._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(detail.body.rawText.includes("Odometer Reading"), true);
+  assert.equal(detail.body.reportFile.data, undefined);
+
+  const pdf = await request(app)
+    .get(`/api/scanner-reports/${scannerReport._id}/file`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200)
+    .expect("Content-Type", "application/pdf");
+  assert.ok(pdf.body.length > 1000);
+
+  const vehicleDetail = await request(app)
+    .get(`/api/vehicles/${vehicle._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(vehicleDetail.body.vehicle.vin, "4T1C11AK0NU123456");
+  assert.equal(vehicleDetail.body.vehicle.mileage, 25250);
+  assert.equal(vehicleDetail.body.scannerReports.length, 1);
+
+  const converted = await request(app)
+    .post(`/api/scanner-reports/${scannerReport._id}/work-order`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(201);
+  assert.equal(converted.body.dtcCodes[0].code, "P0300");
+
+  const reports = await request(app)
+    .get(`/api/scanner-reports?vehicle=${vehicle._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(reports.body[0].convertedWorkOrder.orderNumber, converted.body.orderNumber);
+});
+
 test("work order detail and deep search work", async () => {
   const detail = await request(app)
     .get(`/api/work-orders/${order._id}`)
     .set("Authorization", `Bearer ${token}`)
     .expect(200);
   assert.equal(detail.body.customer.name, "Updated Customer");
-  assert.equal(detail.body.vehicle.vin || "", "");
+  assert.equal(detail.body.vehicle.vin, "4T1C11AK0NU123456");
   assert.equal(detail.body.dtcCodes[0].code, "P0300");
 
   const byDtc = await request(app)
     .get("/api/search?q=P0300")
     .set("Authorization", `Bearer ${token}`)
     .expect(200);
-  assert.equal(byDtc.body.workOrders.length, 1);
+  assert.equal(byDtc.body.workOrders.length, 2);
 
   const byCustomer = await request(app)
     .get("/api/search?q=Updated")
@@ -181,7 +262,7 @@ test("work order detail and deep search work", async () => {
     .expect(200);
   assert.equal(byCustomer.body.customers.length, 1);
   assert.equal(byCustomer.body.vehicles.length, 1);
-  assert.equal(byCustomer.body.workOrders.length, 1);
+  assert.equal(byCustomer.body.workOrders.length, 2);
 });
 test("invoice PDF is generated", async () => {
   const response = await request(app)
@@ -190,6 +271,8 @@ test("invoice PDF is generated", async () => {
     .expect(200)
     .expect("Content-Type", "application/pdf");
   assert.ok(response.body.length > 1000);
+  const pdfText = response.body.toString("latin1");
+  assert.equal((pdfText.match(/\/Type\s*\/Page\b/g) || []).length, 1);
 });
 
 test("estimate CRUD, PDF and conversion work", async () => {
@@ -229,6 +312,31 @@ test("estimate CRUD, PDF and conversion work", async () => {
   assert.equal(converted.body.sourceEstimate, estimate._id);
 });
 
+test("legacy estimate without services can be converted", async () => {
+  const Estimate = (await import("../src/models/Estimate.js")).default;
+  const legacyId = new Estimate()._id;
+  await Estimate.collection.insertOne({
+    _id: legacyId,
+    estimateNumber: "EST-LEGACY",
+    customer: customer._id,
+    vehicle: vehicle._id,
+    status: "approved",
+    labor: 125,
+    taxRate: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const converted = await request(app)
+    .post(`/api/estimates/${legacyId}/convert`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(201);
+
+  assert.deepEqual(converted.body.services, []);
+  assert.equal(converted.body.subtotal, 125);
+  assert.equal(converted.body.total, 125);
+});
+
 test("dashboard reflects stored records", async () => {
   const response = await request(app)
     .get("/api/dashboard")
@@ -246,6 +354,8 @@ test("dashboard reflects stored records", async () => {
 test("records can be deleted in dependency order", async () => {
   const Estimate = (await import("../src/models/Estimate.js")).default;
   await Estimate.deleteMany({});
+  const ScannerReport = (await import("../src/models/ScannerReport.js")).default;
+  await ScannerReport.deleteMany({});
   const WorkOrder = (await import("../src/models/WorkOrder.js")).default;
   await WorkOrder.deleteMany({});
   await request(app).delete(`/api/vehicles/${vehicle._id}`).set("Authorization", `Bearer ${token}`).expect(204);

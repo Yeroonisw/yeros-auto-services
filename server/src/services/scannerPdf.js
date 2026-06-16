@@ -2,8 +2,12 @@ import { PDFParse } from "pdf-parse";
 
 const dtcPattern = /\b([PCBU][0-9A-F]{4})\b/gi;
 const vinPattern = /\b(?=[A-HJ-NPR-Z0-9]{17}\b)(?=.*[0-9])[A-HJ-NPR-Z0-9]{17}\b/i;
-const mileagePattern = /\b(?:mileage|odometer|od[oó]metro|millaje)\s*[:#-]?\s*([0-9][0-9,.\s]{1,12})\s*(?:mi|miles|km)?\b/i;
+const mileagePattern = /\b(?:mileage|odometer(?:\s+reading)?|odometro|odómetro|millaje)\s*[:#-]?\s*([0-9][0-9,.\s]{1,12})\s*(?:mi|miles|km)?\b/i;
 const modulePattern = /\b(?:ECM|PCM|TCM|ABS|SRS|BCM|HVAC|IPC|TPMS|ECU|ENGINE|TRANSMISSION|AIRBAG)\b/i;
+const modulePriority = new Map([
+  ["PCM", 0],
+  ["BCM", 1],
+]);
 
 function cleanText(value = "") {
   return String(value).replace(/\r/g, "\n").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -21,6 +25,15 @@ function lineAround(text, index) {
   const endIndex = text.indexOf("\n", index);
   const end = endIndex === -1 ? text.length : endIndex;
   return text.slice(start, end).trim();
+}
+
+export function sortDtcCodes(codes = []) {
+  return [...codes].sort((left, right) => {
+    const leftPriority = modulePriority.get(String(left.module || "").toUpperCase()) ?? 50;
+    const rightPriority = modulePriority.get(String(right.module || "").toUpperCase()) ?? 50;
+    if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+    return String(left.module || "").localeCompare(String(right.module || "")) || String(left.code || "").localeCompare(String(right.code || ""));
+  });
 }
 
 function parseDtcCodes(text) {
@@ -44,7 +57,7 @@ function parseDtcCodes(text) {
       });
     }
   }
-  return Array.from(found.values());
+  return sortDtcCodes(Array.from(found.values()));
 }
 
 export async function extractScannerReportFromPdf(buffer) {
@@ -66,6 +79,6 @@ export async function extractScannerReportFromPdf(buffer) {
     mileage,
     dtcCodes,
     rawText: text,
-    summary: summaryParts.join(" · "),
+    summary: summaryParts.join(" - "),
   };
 }

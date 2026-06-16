@@ -3,7 +3,7 @@ import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
 import WorkOrder from "../models/WorkOrder.js";
 import ScannerReport from "../models/ScannerReport.js";
-import { extractScannerReportFromPdf } from "../services/scannerPdf.js";
+import { extractScannerReportFromPdf, sortDtcCodes } from "../services/scannerPdf.js";
 
 const router = express.Router();
 const populate = [
@@ -39,6 +39,7 @@ function extractReportFile(body) {
 
 function cleanBody(body) {
   const { reportFileData, reportFileName, autoFillFromPdf, ...rest } = body;
+  if (Array.isArray(rest.dtcCodes)) rest.dtcCodes = sortDtcCodes(rest.dtcCodes);
   return rest;
 }
 
@@ -82,6 +83,16 @@ router.get("/", async (req, res, next) => {
     if (req.query.vehicle) filter.vehicle = req.query.vehicle;
     if (req.query.customer) filter.customer = req.query.customer;
     res.json(await ScannerReport.find(filter).select(reportProjection).populate(populate).sort({ scanDate: -1, createdAt: -1 }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/:id", async (req, res, next) => {
+  try {
+    const report = await ScannerReport.findById(req.params.id).select(reportProjection).populate(populate);
+    if (!report) return res.status(404).json({ message: "Scanner report not found" });
+    res.json(report);
   } catch (error) {
     next(error);
   }
