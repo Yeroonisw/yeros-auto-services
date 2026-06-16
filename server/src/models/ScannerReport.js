@@ -23,6 +23,12 @@ const scannerReportSchema = new mongoose.Schema(
     summary: { type: String, trim: true },
     rawText: { type: String, trim: true },
     sourceFileName: { type: String, trim: true },
+    reportFile: {
+      fileName: { type: String, trim: true },
+      contentType: { type: String, trim: true },
+      size: { type: Number, min: 0 },
+      data: Buffer,
+    },
     convertedWorkOrder: { type: mongoose.Schema.Types.ObjectId, ref: "WorkOrder" },
   },
   { timestamps: true },

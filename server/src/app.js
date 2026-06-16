@@ -23,7 +23,7 @@ const clientIndexPath = path.join(clientDistPath, "index.html");
 export function createApp() {
   const app = express();
   app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "12mb" }));
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
   app.use("/api/auth", authRoutes);

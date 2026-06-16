@@ -23,7 +23,7 @@ router.get("/:id", async (req, res, next) => {
     const [orders, estimates, scannerReports] = await Promise.all([
       WorkOrder.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ openedAt: -1 }),
       Estimate.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ createdAt: -1 }),
-      ScannerReport.find({ vehicle: vehicle._id }).populate("customer", "name phone").sort({ scanDate: -1 }),
+      ScannerReport.find({ vehicle: vehicle._id }).select("-reportFile.data").populate("customer", "name phone").sort({ scanDate: -1 }),
     ]);
     res.json({ vehicle, orders, estimates, scannerReports });
   } catch (error) {

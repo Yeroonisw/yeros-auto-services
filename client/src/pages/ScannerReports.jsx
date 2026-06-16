@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, CarFront, ClipboardPlus, FileScan, Plus, Trash2 } from "lucide-react";
+import { Activity, CarFront, ClipboardPlus, Download, FileScan, Plus, Trash2, Upload } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
@@ -26,6 +26,7 @@ export default function ScannerReports() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(blank);
+  const [reportFile, setReportFile] = useState(null);
   const [error, setError] = useState("");
 
   async function load() {
@@ -57,6 +58,7 @@ export default function ScannerReports() {
 
   function open(report = null) {
     setEditing(report);
+    setReportFile(null);
     if (report) {
       setForm({
         customer: report.customer?._id || "",
@@ -92,15 +94,31 @@ export default function ScannerReports() {
     setForm({ ...form, dtcCodes: form.dtcCodes.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
   }
 
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function submit(event) {
     event.preventDefault();
     setSaving(true);
     setError("");
     try {
+      let reportFileData = "";
+      if (reportFile) {
+        if (reportFile.type !== "application/pdf") throw new Error("Only PDF scanner reports are supported");
+        if (reportFile.size > 8 * 1024 * 1024) throw new Error("PDF report must be 8 MB or smaller");
+        reportFileData = await readFileAsDataUrl(reportFile);
+      }
       const payload = {
         ...form,
         scanDate: form.scanDate || null,
         dtcCodes: form.dtcCodes.filter((item) => item.code.trim()),
+        ...(reportFileData ? { reportFileData, reportFileName: reportFile.name } : {}),
       };
       if (editing) await api.put(`/scanner-reports/${editing._id}`, payload);
       else await api.post("/scanner-reports", payload);
@@ -117,6 +135,21 @@ export default function ScannerReports() {
     try {
       await api.post(`/scanner-reports/${report._id}/work-order`);
       await load();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    }
+  }
+
+  async function downloadReport(report) {
+    try {
+      const response = await api.get(`/scanner-reports/${report._id}/file`, { responseType: "blob" });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.download = report.reportFile?.fileName || `${report.reportNumber}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
     } catch (requestError) {
       setError(errorMessage(requestError));
     }
@@ -158,9 +191,11 @@ export default function ScannerReports() {
         <div className="scanner-car"><CarFront size={17} /><span>{report.vehicle?.year} {report.vehicle?.make} {report.vehicle?.model}</span><small>{report.customer?.name}</small></div>
         <div className="scanner-vitals"><span>VIN <strong>{report.vin || report.vehicle?.vin || "-"}</strong></span><span>Mileage <strong>{Number(report.mileage || report.vehicle?.mileage || 0).toLocaleString()} mi</strong></span></div>
         {report.dtcCodes?.length ? <div className="scanner-dtc-list">{report.dtcCodes.map((dtc, index) => <span key={`${dtc.code}-${index}`}>{dtc.code}</span>)}</div> : <p className="detail-empty compact-empty">No DTC codes.</p>}
+        {report.reportFile?.fileName && <small className="scanner-file"><Upload size={13} /> {report.reportFile.fileName}</small>}
         {report.summary && <p className="scanner-summary">{report.summary}</p>}
         <div className="scanner-actions">
           <button className="text-button" onClick={() => open(report)}>Edit</button>
+          {report.reportFile?.fileName && <button className="text-button" onClick={() => downloadReport(report)}><Download size={14} /> PDF</button>}
           <button className="text-button" onClick={() => createWorkOrder(report)} disabled={Boolean(report.convertedWorkOrder)}><ClipboardPlus size={14} /> {report.convertedWorkOrder ? report.convertedWorkOrder.orderNumber : "Create WO"}</button>
           <button className="text-button danger" onClick={() => remove(report)}><Trash2 size={14} /> Delete</button>
         </div>
@@ -175,6 +210,11 @@ export default function ScannerReports() {
         <label>Scan date<input type="date" value={form.scanDate} onChange={(event) => setForm({ ...form, scanDate: event.target.value })} /></label>
         <label>VIN<input value={form.vin} onChange={(event) => setForm({ ...form, vin: event.target.value.toUpperCase() })} /></label>
         <label>Mileage<input type="number" min="0" value={form.mileage} onChange={(event) => setForm({ ...form, mileage: Number(event.target.value) })} /></label>
+        <label className="span-2">Upload PDF report<input type="file" accept="application/pdf" onChange={(event) => {
+          const file = event.target.files?.[0] || null;
+          setReportFile(file);
+          if (file) setForm({ ...form, sourceFileName: file.name });
+        }} /></label>
         <label className="span-2">Source file name<input value={form.sourceFileName} onChange={(event) => setForm({ ...form, sourceFileName: event.target.value })} placeholder="Example: Autel_Report_2026-06-16.pdf" /></label>
         <div className="span-2 service-editor">
           <div className="service-heading"><strong>DTC codes from scan</strong><button type="button" className="text-button" onClick={() => setForm({ ...form, dtcCodes: [...form.dtcCodes, { code: "", description: "", status: "active", module: "" }] })}>+ Add DTC</button></div>

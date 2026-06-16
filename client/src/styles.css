@@ -264,6 +264,7 @@ textarea { resize: vertical; }
 .scanner-vitals strong { color: #182235; font-size: 11px; word-break: break-word; }
 .scanner-dtc-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .scanner-dtc-list span { padding: 5px 8px; color: #bf2828; border-radius: 999px; background: #feecec; font-size: 10px; font-weight: 800; }
+.scanner-file { display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 7px 9px; color: #3757a6; border-radius: 8px; background: #eef3ff; font-size: 10px; font-weight: 800; }
 .scanner-summary { flex: 1; margin: 0; color: #405069; font-size: 12px; line-height: 1.55; }
 .scanner-actions { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 10px; border-top: 1px solid var(--border); }
 .scanner-actions button { display: inline-flex; align-items: center; gap: 4px; }

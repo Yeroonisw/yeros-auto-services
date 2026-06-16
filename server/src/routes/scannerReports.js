@@ -10,6 +10,36 @@ const populate = [
   { path: "vehicle", select: "year make model plate vin customer mileage" },
   { path: "convertedWorkOrder", select: "orderNumber status" },
 ];
+const reportProjection = "-reportFile.data";
+
+function extractReportFile(body) {
+  if (!body.reportFileData) return null;
+  const match = String(body.reportFileData).match(/^data:(.+);base64,(.+)$/);
+  if (!match) return null;
+  const contentType = match[1];
+  if (contentType !== "application/pdf") {
+    const error = new Error("Only PDF scanner reports are supported");
+    error.status = 400;
+    throw error;
+  }
+  const data = Buffer.from(match[2], "base64");
+  if (data.length > 8 * 1024 * 1024) {
+    const error = new Error("PDF report must be 8 MB or smaller");
+    error.status = 400;
+    throw error;
+  }
+  return {
+    fileName: body.reportFileName || body.sourceFileName || "scanner-report.pdf",
+    contentType,
+    size: data.length,
+    data,
+  };
+}
+
+function cleanBody(body) {
+  const { reportFileData, reportFileName, ...rest } = body;
+  return rest;
+}
 
 async function validateRelations(customerId, vehicleId) {
   const [customer, vehicle] = await Promise.all([Customer.findById(customerId), Vehicle.findById(vehicleId)]);
@@ -36,7 +66,7 @@ router.get("/", async (req, res, next) => {
     const filter = {};
     if (req.query.vehicle) filter.vehicle = req.query.vehicle;
     if (req.query.customer) filter.customer = req.query.customer;
-    res.json(await ScannerReport.find(filter).populate(populate).sort({ scanDate: -1, createdAt: -1 }));
+    res.json(await ScannerReport.find(filter).select(reportProjection).populate(populate).sort({ scanDate: -1, createdAt: -1 }));
   } catch (error) {
     next(error);
   }
@@ -47,8 +77,30 @@ router.post("/", async (req, res, next) => {
     const result = await validateRelations(req.body.customer, req.body.vehicle);
     if (result.error) return res.status(400).json({ message: result.error });
     await syncVehicleFromScan(result.vehicle, req.body);
-    const report = await ScannerReport.create(req.body);
-    res.status(201).json(await report.populate(populate));
+    const payload = cleanBody(req.body);
+    const reportFile = extractReportFile(req.body);
+    if (reportFile) {
+      payload.reportFile = reportFile;
+      payload.sourceFileName = reportFile.fileName;
+    }
+    const report = await ScannerReport.create(payload);
+    res.status(201).json(await report.populate(populate).then((item) => item.toObject({ virtuals: true, transform: (_, ret) => {
+      if (ret.reportFile) delete ret.reportFile.data;
+      return ret;
+    } })));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/:id/file", async (req, res, next) => {
+  try {
+    const report = await ScannerReport.findById(req.params.id).select("reportNumber reportFile");
+    if (!report) return res.status(404).json({ message: "Scanner report not found" });
+    if (!report.reportFile?.data) return res.status(404).json({ message: "No PDF report uploaded" });
+    res.setHeader("Content-Type", report.reportFile.contentType || "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${report.reportFile.fileName || `${report.reportNumber}.pdf`}"`);
+    res.send(report.reportFile.data);
   } catch (error) {
     next(error);
   }
@@ -63,9 +115,18 @@ router.put("/:id", async (req, res, next) => {
     const result = await validateRelations(customer, vehicle);
     if (result.error) return res.status(400).json({ message: result.error });
     await syncVehicleFromScan(result.vehicle, req.body);
-    Object.assign(report, req.body);
+    const payload = cleanBody(req.body);
+    const reportFile = extractReportFile(req.body);
+    if (reportFile) {
+      payload.reportFile = reportFile;
+      payload.sourceFileName = reportFile.fileName;
+    }
+    Object.assign(report, payload);
     await report.save();
-    res.json(await report.populate(populate));
+    const populated = await report.populate(populate);
+    const output = populated.toObject({ virtuals: true });
+    if (output.reportFile) delete output.reportFile.data;
+    res.json(output);
   } catch (error) {
     next(error);
   }
