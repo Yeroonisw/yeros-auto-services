@@ -16,8 +16,24 @@ function cleanText(value = "") {
 function parseMileage(text) {
   const match = text.match(mileagePattern);
   if (!match) return 0;
-  const value = match[1].replace(/[^\d]/g, "");
-  return Number(value) || 0;
+  return normalizeMileage(match[1]);
+}
+
+function normalizeMileage(value = "") {
+  const compact = String(value).trim().replace(/\s+/g, "");
+  if (!compact) return 0;
+  const lastDot = compact.lastIndexOf(".");
+  const lastComma = compact.lastIndexOf(",");
+  const decimalIndex = lastDot > lastComma ? lastDot : lastComma;
+  let whole = compact;
+  if (decimalIndex > -1) {
+    const after = compact.slice(decimalIndex + 1);
+    const before = compact.slice(0, decimalIndex);
+    const separatorCount = (compact.match(/[.,]/g) || []).length;
+    const looksDecimal = after.length > 0 && after.length <= 2 && (separatorCount > 1 || before.replace(/[^\d]/g, "").length >= 4);
+    if (looksDecimal) whole = before;
+  }
+  return Number(whole.replace(/[^\d]/g, "")) || 0;
 }
 
 function lineAround(text, index) {

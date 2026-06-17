@@ -180,7 +180,7 @@ test("scanner reports track Autel scans and convert to work orders", async () =>
     "Autel Diagnostic Report",
     "Scanner: Autel MK900",
     "VIN: 4T1C11AK0NU123456",
-    "Odometer Reading: 25,250 mi",
+    "Odometer Reading: 25,250.6 mi",
     "ECM P0420 Catalyst efficiency below threshold",
     "BCM B1000 Body control module stored code",
     "PCM P0300 Random misfire detected",
