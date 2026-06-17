@@ -17,6 +17,7 @@ import Home from "./pages/Home.jsx";
 import ScannerReports from "./pages/ScannerReports.jsx";
 import ScannerReportDetail from "./pages/ScannerReportDetail.jsx";
 import AutelImport from "./pages/AutelImport.jsx";
+import AutelLive from "./pages/AutelLive.jsx";
 
 function ProtectedRoute() {
   const { authenticated } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/scanner-reports" element={<ScannerReports />} />
           <Route path="/scanner-reports/:id" element={<ScannerReportDetail />} />
           <Route path="/autel-import" element={<AutelImport />} />
+          <Route path="/autel-live" element={<AutelLive />} />
           <Route path="/estimates" element={<Estimates />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />

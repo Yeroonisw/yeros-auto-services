@@ -9,6 +9,7 @@ import {
   FileText,
   Gauge,
   LogOut,
+  MonitorSmartphone,
   Search,
   UserRound,
   Wrench,
@@ -23,6 +24,7 @@ const links = [
   { to: "/work-orders", label: "Work orders", icon: ClipboardList },
   { to: "/scanner-reports", label: "Scanner reports", icon: Activity },
   { to: "/autel-import", label: "Autel import", icon: Cloud },
+  { to: "/autel-live", label: "Autel live", icon: MonitorSmartphone },
   { to: "/assistant", label: "AI diagnostics", icon: Bot },
   { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
 ];
