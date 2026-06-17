@@ -10,8 +10,8 @@ import { business } from "../config/business.js";
 const copy = {
   es: {
     language: "Idioma",
-    nav: ["Servicios", "Nosotros", "Contacto"],
-    admin: "Login",
+    nav: ["Servicios", "Precios", "Nosotros", "Contacto"],
+    admin: "Portal administrativo",
     availability: "Mecánica a domicilio disponible 24/7",
     kicker: "Servicio donde estés",
     heroTitle: "Mecánica general a domicilio.",
@@ -35,6 +35,11 @@ const copy = {
       ["Mantenimiento", "Mantenimiento preventivo y reparaciones para mantener tu vehículo confiable."],
       ["Mecánica a domicilio", "Vamos hasta tu ubicación para trabajos que puedan realizarse de forma segura en el lugar."],
     ],
+    pricingKicker: "Lista de precios",
+    pricingTitle: "Precios de mano de obra.",
+    pricingLead: "Valores estimados para servicios comunes a domicilio. El precio final puede variar segun el vehiculo, acceso, condicion y trabajo adicional necesario.",
+    priceLabel: "Precio",
+    pricingCondition: "Precios solo incluyen mano de obra. Piezas se cobran aparte. Trabajos adicionales pueden generar costos extras.",
     aboutKicker: "Sobre Yeros Auto Services",
     aboutTitle: "Comunicación clara. Diagnóstico práctico. Reparaciones de calidad.",
     aboutText: "Yeros Auto Services LLC ofrece mecánica general a domicilio para clientes que necesitan ayuda confiable con sus vehículos. Escuchamos los síntomas, diagnosticamos el problema y explicamos la reparación.",
@@ -53,8 +58,8 @@ const copy = {
   },
   en: {
     language: "Language",
-    nav: ["Services", "About", "Contact"],
-    admin: "Login",
+    nav: ["Services", "Pricing", "About", "Contact"],
+    admin: "Admin portal",
     availability: "Mobile mechanic available 24/7",
     kicker: "Service where you are",
     heroTitle: "General mobile auto repair.",
@@ -78,6 +83,11 @@ const copy = {
       ["Maintenance", "Preventive maintenance and repairs that help keep your vehicle dependable."],
       ["Mobile mechanic", "We come to your location for work that can be completed safely on site."],
     ],
+    pricingKicker: "Price list",
+    pricingTitle: "Labor pricing.",
+    pricingLead: "Estimated labor prices for common mobile services. Final price can vary by vehicle, access, condition and any additional work needed.",
+    priceLabel: "Price",
+    pricingCondition: "Prices include labor only. Parts are charged separately. Additional work may generate extra costs.",
     aboutKicker: "About Yeros Auto Services",
     aboutTitle: "Clear communication. Practical diagnosis. Quality repairs.",
     aboutText: "Yeros Auto Services LLC provides mobile general mechanical service for customers who need dependable help with their vehicles. We listen to the symptoms, diagnose the problem and explain the repair.",
@@ -97,6 +107,111 @@ const copy = {
 };
 
 const serviceIcons = [Settings, Disc3, Gauge, BatteryCharging, Wrench, House];
+
+const pricingSections = {
+  es: [
+    {
+      title: "Servicios Basicos",
+      items: [
+        ["Cambio de aceite y filtro", "$30 - $40"],
+        ["Pastillas de freno (un eje)", "$80 - $100"],
+        ["Freno completo (un eje)", "$140 - $180"],
+        ["Cambio de bateria", "$25 - $35"],
+        ["Alternador", "$100 - $140"],
+        ["Starter", "$110 - $150"],
+      ],
+    },
+    {
+      title: "Suspension y Direccion",
+      items: [
+        ["Strut o amortiguador (cada uno)", "$90 - $130"],
+        ["2 Struts delanteros", "$180 - $240"],
+        ["Ball joint", "$100 - $150"],
+        ["Terminal de direccion", "$70 - $100"],
+        ["Control arm", "$120 - $160"],
+        ["Hub/Bearing", "$120 - $180"],
+      ],
+    },
+    {
+      title: "Motor",
+      items: [
+        ["Bobina", "$30 - $50"],
+        ["Bujias 4 cilindros", "$90 - $120"],
+        ["Bujias 6 cilindros", "$140 - $180"],
+        ["Empaque tapa valvulas", "$150 - $200"],
+        ["Bomba de agua", "$180 - $300"],
+        ["Radiador", "$150 - $200"],
+      ],
+    },
+    {
+      title: "Aire Acondicionado",
+      items: [
+        ["Compresor AC", "$220 - $350"],
+        ["Condensador", "$150 - $200"],
+        ["Vaciar y cargar AC", "$100 - $150"],
+      ],
+    },
+    {
+      title: "Diagnostico",
+      items: [
+        ["Escaneo simple", "$40 - $50"],
+        ["Diagnostico electrico", "$100 - $150"],
+        ["Diagnostico profundo", "$120 - $180"],
+      ],
+    },
+  ],
+  en: [
+    {
+      title: "Basic Services",
+      items: [
+        ["Oil and filter change", "$30 - $40"],
+        ["Brake pads (one axle)", "$80 - $100"],
+        ["Complete brake service (one axle)", "$140 - $180"],
+        ["Battery replacement", "$25 - $35"],
+        ["Alternator", "$100 - $140"],
+        ["Starter", "$110 - $150"],
+      ],
+    },
+    {
+      title: "Suspension and Steering",
+      items: [
+        ["Strut or shock (each)", "$90 - $130"],
+        ["2 front struts", "$180 - $240"],
+        ["Ball joint", "$100 - $150"],
+        ["Tie rod end", "$70 - $100"],
+        ["Control arm", "$120 - $160"],
+        ["Hub/Bearing", "$120 - $180"],
+      ],
+    },
+    {
+      title: "Engine",
+      items: [
+        ["Ignition coil", "$30 - $50"],
+        ["Spark plugs 4-cylinder", "$90 - $120"],
+        ["Spark plugs 6-cylinder", "$140 - $180"],
+        ["Valve cover gasket", "$150 - $200"],
+        ["Water pump", "$180 - $300"],
+        ["Radiator", "$150 - $200"],
+      ],
+    },
+    {
+      title: "Air Conditioning",
+      items: [
+        ["AC compressor", "$220 - $350"],
+        ["Condenser", "$150 - $200"],
+        ["Evacuate and recharge AC", "$100 - $150"],
+      ],
+    },
+    {
+      title: "Diagnostics",
+      items: [
+        ["Simple scan", "$40 - $50"],
+        ["Electrical diagnosis", "$100 - $150"],
+        ["Deep diagnosis", "$120 - $180"],
+      ],
+    },
+  ],
+};
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,8 +234,9 @@ export default function Home() {
       <button className="public-menu-button" onClick={() => setMenuOpen((current) => !current)} aria-label="Toggle navigation">{menuOpen ? <X /> : <Menu />}</button>
       <nav className={menuOpen ? "public-nav open" : "public-nav"}>
         <a href="#services" onClick={() => setMenuOpen(false)}>{t.nav[0]}</a>
-        <a href="#about" onClick={() => setMenuOpen(false)}>{t.nav[1]}</a>
-        <a href="#contact" onClick={() => setMenuOpen(false)}>{t.nav[2]}</a>
+        <a href="#pricing" onClick={() => setMenuOpen(false)}>{t.nav[1]}</a>
+        <a href="#about" onClick={() => setMenuOpen(false)}>{t.nav[2]}</a>
+        <a href="#contact" onClick={() => setMenuOpen(false)}>{t.nav[3]}</a>
         <Link to="/login" className="portal-link">{t.admin}</Link>
       </nav>
       <div className="public-header-actions">
@@ -129,7 +245,6 @@ export default function Home() {
           <button className={language === "en" ? "active" : ""} onClick={() => changeLanguage("en")}>EN</button>
         </div>
         <a className="public-call" href={`tel:${business.phone}`}><Phone size={17} /> {business.phoneDisplay}</a>
-        
       </div>
     </header>
 
@@ -161,6 +276,15 @@ export default function Home() {
           const Icon = serviceIcons[index];
           return <article className="public-service-card" key={title}><div className="service-icon"><Icon /></div><h3>{title}</h3><p>{text}</p><a href={`https://wa.me/${business.whatsapp}`} target="_blank" rel="noreferrer">{t.askService} <ArrowRight /></a></article>;
         })}</div>
+      </section>
+
+      <section className="pricing-section" id="pricing">
+        <div className="public-section-heading"><p className="public-kicker">{t.pricingKicker}</p><h2>{t.pricingTitle}</h2><p>{t.pricingLead}</p></div>
+        <div className="pricing-grid">{pricingSections[language].map((section) => <article className="pricing-card" key={section.title}>
+          <h3>{section.title}</h3>
+          <div className="pricing-lines">{section.items.map(([job, price]) => <div key={job}><span>{job}</span><strong>{price}</strong></div>)}</div>
+        </article>)}</div>
+        <div className="pricing-condition"><BadgeCheck /><p>{t.pricingCondition}</p></div>
       </section>
 
       <section className="public-about" id="about">

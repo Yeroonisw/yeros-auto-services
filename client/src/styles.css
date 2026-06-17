@@ -450,6 +450,18 @@ textarea { resize: vertical; }
 .public-service-card h3 { margin-bottom: 10px; color: #1b2638; font-size: 17px; }
 .public-service-card p { min-height: 66px; margin-bottom: 19px; color: #7a8493; font-size: 12px; line-height: 1.65; }
 .public-service-card a { display: inline-flex; align-items: center; gap: 6px; color: #c32626; font-size: 11px; font-weight: 800; text-decoration: none; }
+.pricing-section { padding: 105px clamp(24px, 7vw, 110px); background: #fff; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; max-width: 1260px; margin: 0 auto; }
+.pricing-card { overflow: hidden; border: 1px solid #e0e5eb; border-radius: 14px; background: #fff; box-shadow: 0 8px 30px rgba(24,34,52,.035); }
+.pricing-card h3 { margin: 0; padding: 18px 20px; color: white; background: linear-gradient(135deg, #111827, #26334a); font-size: 16px; }
+.pricing-lines { display: grid; }
+.pricing-lines div { display: flex; justify-content: space-between; gap: 18px; padding: 13px 20px; border-top: 1px solid #edf0f4; color: #4b5565; font-size: 12px; }
+.pricing-lines div:first-child { border-top: 0; }
+.pricing-lines span { line-height: 1.45; }
+.pricing-lines strong { flex: 0 0 auto; color: #c32626; font-family: "Manrope"; white-space: nowrap; }
+.pricing-condition { max-width: 1260px; display: flex; align-items: flex-start; gap: 10px; margin: 20px auto 0; padding: 16px 18px; color: #5d4a16; border: 1px solid #ead99d; border-radius: 12px; background: #fff9e4; }
+.pricing-condition svg { flex: 0 0 auto; width: 18px; color: #c7951a; }
+.pricing-condition p { margin: 0; font-size: 12px; line-height: 1.6; }
 .public-about { display: grid; grid-template-columns: minmax(330px, .85fr) minmax(0, 1fr); align-items: center; gap: clamp(48px, 8vw, 120px); padding: 110px clamp(24px, 9vw, 150px); background: white; }
 .about-mark { position: relative; min-height: 420px; display: grid; place-items: center; overflow: hidden; padding: 50px; border-radius: 22px; background: linear-gradient(145deg, #0d1421, #26334a); }
 .about-mark::before { content: ""; position: absolute; width: 300px; height: 300px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; box-shadow: 0 0 0 75px rgba(255,255,255,.025), 0 0 0 150px rgba(255,255,255,.012); }
@@ -501,6 +513,7 @@ textarea { resize: vertical; }
   .public-nav { gap: 18px; }
   .public-hero { grid-template-columns: 1fr 380px; padding-inline: 45px; }
   .service-card-grid { grid-template-columns: 1fr 1fr; }
+  .pricing-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 760px) {
   .sidebar { width: min(310px, 86vw); padding-top: max(22px, env(safe-area-inset-top)); padding-bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-100%); transition: transform .22s ease; }
@@ -546,6 +559,8 @@ textarea { resize: vertical; }
   .public-section { padding: 76px 18px; }
   .service-card-grid { grid-template-columns: 1fr; }
   .public-service-card p { min-height: 0; }
+  .pricing-section { padding: 76px 18px; }
+  .pricing-grid { grid-template-columns: 1fr; }
   .public-about { grid-template-columns: 1fr; gap: 45px; padding: 76px 18px; }
   .about-mark { min-height: 300px; padding: 32px; }
   .contact-section { grid-template-columns: 1fr; padding: 76px 18px; }
@@ -612,4 +627,5 @@ textarea { resize: vertical; }
   .contact-actions { grid-template-columns: 1fr; }
   .contact-panel { padding: 30px 22px; }
   .public-strip strong { font-size: 15px; }
+  .pricing-lines div { align-items: flex-start; flex-direction: column; gap: 4px; }
 }
