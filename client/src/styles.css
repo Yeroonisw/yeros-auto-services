@@ -131,6 +131,10 @@ textarea { resize: vertical; }
 .form-error { padding: 10px; color: #9b2525; border-radius: 7px; background: #fff0f0; font-size: 12px; }
 .service-editor { padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: #fafbfc; }
 .service-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: #344054; font-size: 12px; }
+.line-actions { display: inline-flex; align-items: center; gap: 10px; }
+.file-action { position: relative; overflow: hidden; cursor: pointer; }
+.file-action input { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.file-action.disabled { color: var(--muted); cursor: wait; }
 .service-row { display: grid; grid-template-columns: 1fr 70px 100px 100px 30px; gap: 8px; margin-top: 8px; }
 .service-labels { margin-top: 12px; color: #8a93a2; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .service-labels span:not(:first-child) { text-align: right; }

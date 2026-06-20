@@ -3,6 +3,7 @@ import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 import { useNavigate } from "react-router-dom";
+import { appendReceiptLines, previewReceipt } from "../receiptReader.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const labels = { pending: "Pending", in_progress: "In progress", completed: "Completed", cancelled: "Cancelled" };
@@ -25,6 +26,7 @@ export default function WorkOrders() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
+  const [readingReceipt, setReadingReceipt] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -64,6 +66,18 @@ export default function WorkOrders() {
 
   function updateService(index, field, value) {
     setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
+  }
+
+  async function importReceipt(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setReadingReceipt(true); setError("");
+    try {
+      const receipt = await previewReceipt(file);
+      setForm((current) => ({ ...current, services: appendReceiptLines(current.services, receipt.items, { includeCost: true }) }));
+    } catch (requestError) { setError(errorMessage(requestError)); }
+    finally { setReadingReceipt(false); }
   }
 
   function updateDtc(index, field, value) {
@@ -132,7 +146,13 @@ export default function WorkOrders() {
           <label>Vehicle<select value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} required><option value="">Select vehicle</option>{customerVehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.plate ? `- ${vehicle.plate}` : ""}</option>)}</select></label>
           <label className="span-2">Status<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <div className="span-2 service-editor">
-            <div className="service-heading"><strong>Services and parts</strong><button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}>+ Add line</button></div>
+            <div className="service-heading">
+              <strong>Services and parts</strong>
+              <span className="line-actions">
+                <label className={`text-button file-action ${readingReceipt ? "disabled" : ""}`}>{readingReceipt ? "Reading..." : "Import receipt"}<input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={importReceipt} disabled={readingReceipt} /></label>
+                <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}>+ Add line</button>
+              </span>
+            </div>
             <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Sale price</span><span>Part cost</span><span /></div>
             {form.services.map((item, index) => <div className="service-row" key={index}>
               <input aria-label="Description" placeholder="Description" value={item.description} onChange={(e) => updateService(index, "description", e.target.value)} />

@@ -254,6 +254,36 @@ test("scanner reports track Autel scans and convert to work orders", async () =>
   assert.equal(reports.body[0].convertedWorkOrder.orderNumber, converted.body.orderNumber);
 });
 
+test("receipt reader extracts receipt lines from PDFs", async () => {
+  const receiptPdf = await createPdfBuffer([
+    "AutoZone Receipt",
+    "STP Extended Life Engine Oil Filter Element S11665XL $9.65",
+    "Mobil 1 Advanced Full Synthetic 5W-20 Motor Oil 1 Quart $12.99",
+    "Mobil 1 High Mileage Full Synthetic 5W-20 Motor Oil 1 Quart qty 2 $25.98",
+    "Subtotal $48.62",
+  ]);
+
+  const preview = await request(app)
+    .post("/api/receipt-reader/preview")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      receiptFileName: "autozone-receipt.pdf",
+      receiptFileData: `data:application/pdf;base64,${receiptPdf.toString("base64")}`,
+    })
+    .expect(200);
+
+  assert.equal(preview.body.vendor, "AutoZone");
+  assert.equal(preview.body.sourceFileName, "autozone-receipt.pdf");
+  assert.deepEqual(preview.body.items.map((item) => item.description), [
+    "STP Extended Life Engine Oil Filter Element S11665XL",
+    "Mobil 1 Advanced Full Synthetic 5W-20 Motor Oil 1 Quart",
+    "Mobil 1 High Mileage Full Synthetic 5W-20 Motor Oil 1 Quart",
+  ]);
+  assert.equal(preview.body.items[2].quantity, 2);
+  assert.equal(preview.body.items[2].unitPrice, 12.99);
+  assert.equal(preview.body.items[2].lineTotal, 25.98);
+});
+
 test("work order detail and deep search work", async () => {
   const detail = await request(app)
     .get(`/api/work-orders/${order._id}`)
