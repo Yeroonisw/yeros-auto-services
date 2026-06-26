@@ -20,6 +20,33 @@ async function validateRelations(body) {
   return null;
 }
 
+async function syncVehicleFromWorkOrder(order) {
+  if (!order?.vehicle) return;
+  const vehicle = await Vehicle.findById(order.vehicle);
+  if (!vehicle) return;
+  let changed = false;
+  const oilChange = order.oilChange || {};
+  const oilMileage = Number(oilChange.mileage || 0);
+
+  if (oilMileage > Number(vehicle.mileage || 0)) {
+    vehicle.mileage = oilMileage;
+    changed = true;
+  }
+
+  if (oilChange.performed) {
+    vehicle.oilChange = {
+      lastDate: oilChange.serviceDate || order.completedAt || order.openedAt || new Date(),
+      lastMileage: oilMileage || Number(vehicle.mileage || 0),
+      intervalMiles: Number(oilChange.intervalMiles || vehicle.oilChange?.intervalMiles || 3000),
+      intervalMonths: Number(oilChange.intervalMonths || vehicle.oilChange?.intervalMonths || 3),
+      notes: oilChange.notes || vehicle.oilChange?.notes || "",
+    };
+    changed = true;
+  }
+
+  if (changed) await vehicle.save();
+}
+
 router.get("/", async (req, res, next) => {
   try {
     const filter = req.query.status ? { status: req.query.status } : {};
@@ -34,6 +61,7 @@ router.post("/", async (req, res, next) => {
     const relationError = await validateRelations(req.body);
     if (relationError) return res.status(400).json({ message: relationError });
     const order = await WorkOrder.create(req.body);
+    await syncVehicleFromWorkOrder(order);
     res.status(201).json(await order.populate(populate));
   } catch (error) {
     next(error);
@@ -45,7 +73,7 @@ router.get("/:id", async (req, res, next) => {
     const order = await WorkOrder.findById(req.params.id)
       .populate([
         { path: "customer", select: "name phone email address notes" },
-        { path: "vehicle", select: "year make model plate vin color mileage customer" },
+        { path: "vehicle", select: "year make model plate vin color mileage customer oilChange" },
         { path: "sourceEstimate", select: "estimateNumber status" },
       ]);
     if (!order) return res.status(404).json({ message: "Work order not found" });
@@ -86,6 +114,7 @@ router.put("/:id", async (req, res, next) => {
     if (current.status === "completed" && !current.completedAt) current.completedAt = new Date();
     if (current.status !== "completed") current.completedAt = undefined;
     await current.save();
+    await syncVehicleFromWorkOrder(current);
     res.json(await current.populate(populate));
   } catch (error) {
     next(error);

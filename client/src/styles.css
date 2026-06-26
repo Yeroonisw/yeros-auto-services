@@ -140,6 +140,8 @@ textarea { resize: vertical; }
 .file-action.disabled { color: var(--muted); cursor: wait; }
 .service-row { display: grid; grid-template-columns: 1fr 70px 100px 100px 30px; gap: 8px; margin-top: 8px; }
 .oil-change-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.checkbox-line { display: flex !important; grid-template-columns: none !important; align-items: center; gap: 9px !important; margin: 4px 0 12px; color: #344054; }
+.checkbox-line input { width: auto; }
 .service-labels { margin-top: 12px; color: #8a93a2; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .service-labels span:not(:first-child) { text-align: right; }
 .dtc-row { display: grid; grid-template-columns: 95px 1fr 110px 30px; gap: 8px; margin-top: 8px; }

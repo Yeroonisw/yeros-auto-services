@@ -105,6 +105,15 @@ export default function WorkOrderDetail() {
           </div>
         </section>
         <aside className="detail-side">
+          {order.oilChange?.performed && <section className="panel detail-section">
+            <div className="panel-heading"><h2>Oil change tracking</h2><p>This order updated the vehicle service reminder.</p></div>
+            <div className="finance-breakdown">
+              <div><span>Service mileage</span><strong>{Number(order.oilChange.mileage || 0).toLocaleString()} mi</strong></div>
+              <div><span>Next due</span><strong>{Number((order.oilChange.mileage || 0) + (order.oilChange.intervalMiles || 0)).toLocaleString()} mi</strong></div>
+              <div><span>Interval</span><strong>{Number(order.oilChange.intervalMiles || 0).toLocaleString()} mi / {order.oilChange.intervalMonths || 0} mo</strong></div>
+            </div>
+            {order.oilChange.notes && <p className="detail-notes">{order.oilChange.notes}</p>}
+          </section>}
           <section className="panel internal-finance">
             <div className="panel-heading"><h2>Internal profitability</h2><p>Not shown on the customer invoice.</p></div>
             <div className="finance-breakdown">

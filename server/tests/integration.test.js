@@ -139,6 +139,7 @@ test("work order CRUD and totals work", async () => {
       vehicle: vehicle._id,
       services: [{ description: "Oil change", quantity: 1, price: 50, cost: 20 }],
       dtcCodes: [{ code: "P0300", description: "Random misfire", status: "active" }],
+      oilChange: { performed: true, mileage: 26000, intervalMiles: 5000, intervalMonths: 6, notes: "5W-20 synthetic" },
       labor: 25,
       taxRate: 10,
       paymentMethod: "Zelle",
@@ -150,6 +151,7 @@ test("work order CRUD and totals work", async () => {
   assert.equal(order.grossProfit, 55);
   assert.equal(order.dtcCodes[0].code, "P0300");
   assert.equal(order.paymentMethod, "Zelle");
+  assert.equal(order.oilChange.performed, true);
 
   const updated = await request(app)
     .put(`/api/work-orders/${order._id}`)
@@ -158,6 +160,15 @@ test("work order CRUD and totals work", async () => {
     .expect(200);
   assert.equal(updated.body.status, "completed");
   assert.ok(updated.body.completedAt);
+
+  const vehicleAfterOilChange = await request(app)
+    .get(`/api/vehicles/${vehicle._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(vehicleAfterOilChange.body.vehicle.mileage, 26000);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChange.lastMileage, 26000);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChange.intervalMiles, 5000);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChangeStatus.nextMileage, 31000);
 });
 
 test("customer history includes vehicles and repairs", async () => {
@@ -249,7 +260,7 @@ test("scanner reports track Autel scans and convert to work orders", async () =>
     .set("Authorization", `Bearer ${token}`)
     .expect(200);
   assert.equal(vehicleDetail.body.vehicle.vin, "4T1C11AK0NU123456");
-  assert.equal(vehicleDetail.body.vehicle.mileage, 25250);
+  assert.equal(vehicleDetail.body.vehicle.mileage, 26000);
   assert.equal(vehicleDetail.body.scannerReports.length, 1);
 
   const converted = await request(app)

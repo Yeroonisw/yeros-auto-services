@@ -12,6 +12,7 @@ const blank = {
   customer: "", vehicle: "", status: "pending",
   services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
   dtcCodes: [{ code: "", description: "", status: "active" }],
+  oilChange: { performed: false, mileage: 0, serviceDate: new Date().toISOString().slice(0, 10), intervalMiles: 3000, intervalMonths: 3, notes: "" },
   labor: 0, taxRate: 0, paymentMethod: "Pending", notes: "",
 };
 
@@ -49,19 +50,39 @@ export default function WorkOrders() {
         customer: order.customer?._id || "", vehicle: order.vehicle?._id || "", status: order.status,
         services: order.services.length ? order.services.map(({ description, quantity, price, cost }) => ({ description, quantity, price, cost: cost || 0 })) : [{ description: "", quantity: 1, price: 0, cost: 0 }],
         dtcCodes: order.dtcCodes?.length ? order.dtcCodes.map(({ code, description, status }) => ({ code, description, status })) : [{ code: "", description: "", status: "active" }],
+        oilChange: {
+          performed: Boolean(order.oilChange?.performed),
+          mileage: order.oilChange?.mileage || order.vehicle?.mileage || 0,
+          serviceDate: order.oilChange?.serviceDate ? order.oilChange.serviceDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          intervalMiles: order.oilChange?.intervalMiles || 3000,
+          intervalMonths: order.oilChange?.intervalMonths || 3,
+          notes: order.oilChange?.notes || "",
+        },
         labor: order.labor || 0, taxRate: order.taxRate || 0, paymentMethod: order.paymentMethod || "Pending", notes: order.notes || "",
       });
     } else {
       const customer = customers[0]?._id || "";
       const firstVehicle = vehicles.find((vehicle) => (vehicle.customer?._id || vehicle.customer) === customer);
-      setForm({ ...blank, customer, vehicle: firstVehicle?._id || "", services: [{ description: "", quantity: 1, price: 0, cost: 0 }], dtcCodes: [{ code: "", description: "", status: "active" }] });
+      setForm({
+        ...blank,
+        customer,
+        vehicle: firstVehicle?._id || "",
+        oilChange: { ...blank.oilChange, mileage: firstVehicle?.mileage || 0 },
+        services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
+        dtcCodes: [{ code: "", description: "", status: "active" }],
+      });
     }
     setModalOpen(true);
   }
 
   function updateCustomer(customer) {
     const firstVehicle = vehicles.find((vehicle) => (vehicle.customer?._id || vehicle.customer) === customer);
-    setForm({ ...form, customer, vehicle: firstVehicle?._id || "" });
+    setForm({ ...form, customer, vehicle: firstVehicle?._id || "", oilChange: { ...form.oilChange, mileage: firstVehicle?.mileage || form.oilChange.mileage } });
+  }
+
+  function updateVehicle(vehicleId) {
+    const vehicle = vehicles.find((item) => item._id === vehicleId);
+    setForm({ ...form, vehicle: vehicleId, oilChange: { ...form.oilChange, mileage: vehicle?.mileage || form.oilChange.mileage } });
   }
 
   function updateService(index, field, value) {
@@ -104,6 +125,7 @@ export default function WorkOrders() {
     try {
       const payload = {
         ...form,
+        oilChange: { ...form.oilChange, serviceDate: form.oilChange.serviceDate || null },
         services: form.services.filter((item) => item.description.trim()),
         dtcCodes: form.dtcCodes.filter((item) => item.code.trim()),
       };
@@ -143,7 +165,7 @@ export default function WorkOrders() {
       {modalOpen && <Modal title={editing ? `Edit ${editing.orderNumber}` : "New work order"} onClose={() => setModalOpen(false)} wide>
         <form className="form-grid" onSubmit={submit}>
           <label>Customer<select value={form.customer} onChange={(e) => updateCustomer(e.target.value)} required><option value="">Select customer</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
-          <label>Vehicle<select value={form.vehicle} onChange={(e) => setForm({ ...form, vehicle: e.target.value })} required><option value="">Select vehicle</option>{customerVehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.plate ? `- ${vehicle.plate}` : ""}</option>)}</select></label>
+          <label>Vehicle<select value={form.vehicle} onChange={(e) => updateVehicle(e.target.value)} required><option value="">Select vehicle</option>{customerVehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.plate ? `- ${vehicle.plate}` : ""}</option>)}</select></label>
           <label className="span-2">Status<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <div className="span-2 service-editor">
             <div className="service-heading">
@@ -170,6 +192,17 @@ export default function WorkOrders() {
               <select aria-label="DTC status" value={item.status} onChange={(e) => updateDtc(index, "status", e.target.value)}><option value="active">Active</option><option value="pending">Pending</option><option value="history">History</option></select>
               <button type="button" className="remove-line" onClick={() => setForm({ ...form, dtcCodes: form.dtcCodes.filter((_, i) => i !== index) })} disabled={form.dtcCodes.length === 1}>x</button>
             </div>)}
+          </div>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Oil change performed</strong><span>Updates vehicle mileage and next service</span></div>
+            <label className="checkbox-line"><input type="checkbox" checked={form.oilChange.performed} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, performed: e.target.checked } })} /> Mark this work order as an oil change</label>
+            {form.oilChange.performed && <div className="oil-change-grid">
+              <label>Service date<input type="date" value={form.oilChange.serviceDate} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, serviceDate: e.target.value } })} /></label>
+              <label>Current mileage<input type="number" min="0" value={form.oilChange.mileage} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, mileage: Number(e.target.value) } })} /></label>
+              <label>Next interval miles<input type="number" min="0" value={form.oilChange.intervalMiles} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMiles: Number(e.target.value) } })} /></label>
+              <label>Next interval months<input type="number" min="0" value={form.oilChange.intervalMonths} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMonths: Number(e.target.value) } })} /></label>
+              <label className="span-2">Oil/filter notes<input value={form.oilChange.notes} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, notes: e.target.value } })} placeholder="5W-20, filter number, brand..." /></label>
+            </div>}
           </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(e) => setForm({ ...form, labor: Number(e.target.value) })} /></label>
           <label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: Number(e.target.value) })} /></label>
