@@ -105,6 +105,9 @@ td strong { color: #182235; }
 .status.completed { color: #087a52; background: #def7ec; }.status.cancelled { color: #a12626; background: #fde8e8; }
 .status.active { color: #a12626; background: #fde8e8; }
 .status.history { color: #4b5563; background: #eef0f3; }
+.status.oil-current { color: #087a52; background: #def7ec; }
+.status.oil-due_soon { color: #9a6700; background: #fff4ce; }
+.status.oil-overdue { color: #a12626; background: #fde8e8; }
 .status.estimate-draft { color: #4b5563; background: #eef0f3; }
 .status.estimate-sent { color: #1958a6; background: #e7f0ff; }
 .status.estimate-approved { color: #087a52; background: #def7ec; }
@@ -136,6 +139,7 @@ textarea { resize: vertical; }
 .file-action input { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
 .file-action.disabled { color: var(--muted); cursor: wait; }
 .service-row { display: grid; grid-template-columns: 1fr 70px 100px 100px 30px; gap: 8px; margin-top: 8px; }
+.oil-change-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .service-labels { margin-top: 12px; color: #8a93a2; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .service-labels span:not(:first-child) { text-align: right; }
 .dtc-row { display: grid; grid-template-columns: 95px 1fr 110px 30px; gap: 8px; margin-top: 8px; }
@@ -371,6 +375,16 @@ textarea { resize: vertical; }
 .owner-card span { color: var(--muted); font-size: 9px; text-transform: uppercase; }
 .owner-card a { margin: 3px 0; color: #244e9c; font-weight: 700; text-decoration: none; }
 .owner-card small { color: #7d8796; font-size: 10px; }
+.oil-change-card { display: grid; grid-template-columns: auto 1fr minmax(220px, auto); gap: 16px; align-items: center; margin-bottom: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: white; box-shadow: 0 5px 22px rgba(24,34,52,.035); }
+.oil-change-card.current { border-color: #b7ecd8; background: #f6fffb; }
+.oil-change-card.due_soon { border-color: #f0dda2; background: #fffaf0; }
+.oil-change-card.overdue { border-color: #f3c7c7; background: #fff6f6; }
+.oil-change-card > svg { color: var(--red); }
+.oil-change-card span, .oil-change-card small { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.oil-change-card h2 { margin: 4px 0 6px; color: #1d2939; font-size: 22px; }
+.oil-change-card p { margin: 0; color: #536177; font-size: 12px; }
+.oil-change-meta { display: grid; grid-template-columns: auto auto; gap: 5px 14px; align-items: center; }
+.oil-change-meta strong { color: #1d2939; font-size: 12px; text-align: right; }
 .vehicle-timeline { padding: 0 20px; }
 .vehicle-timeline article { display: grid; grid-template-columns: 120px 1fr 100px; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); }
 .vehicle-timeline article:last-child { border-bottom: 0; }
@@ -580,6 +594,7 @@ textarea { resize: vertical; }
   .stats-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
+  .oil-change-grid { grid-template-columns: 1fr; }
   .service-row { grid-template-columns: 1fr 60px 80px 80px 30px; }
   .dtc-row { grid-template-columns: 82px 1fr 30px; }
   .dtc-row select { grid-column: span 2; }
@@ -592,6 +607,9 @@ textarea { resize: vertical; }
   .chat-message { max-width: 94%; }
   .repair-item { grid-template-columns: 1fr; }
   .profile-grid { grid-template-columns: 1fr; }
+  .oil-change-card { grid-template-columns: 1fr; }
+  .oil-change-meta { grid-template-columns: 1fr; }
+  .oil-change-meta strong { text-align: left; }
   .vehicle-timeline article { grid-template-columns: 1fr; gap: 8px; }
   .timeline-total { text-align: left; }
   .profit-preview { flex-direction: column; gap: 6px; }

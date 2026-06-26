@@ -5,6 +5,14 @@ import api, { errorMessage } from "../api.js";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const oilLabels = { current: "Current", due_soon: "Due soon", overdue: "Overdue" };
+
+function oilHelper(vehicle) {
+  const status = vehicle.oilChangeStatus;
+  if (!status?.nextMileage) return "Add the last oil change mileage to start tracking.";
+  if (status.status === "overdue") return `${Math.abs(Number(status.milesRemaining || 0)).toLocaleString()} miles overdue`;
+  return `${Number(status.milesRemaining || 0).toLocaleString()} miles remaining`;
+}
 
 export default function VehicleDetail() {
   const { id } = useParams();
@@ -30,6 +38,22 @@ export default function VehicleDetail() {
         <article><CarFront /><span>License plate</span><strong>{data.vehicle.plate || "Not recorded"}</strong></article>
         <article><Gauge /><span>Mileage</span><strong>{Number(data.vehicle.mileage || 0).toLocaleString()} mi</strong></article>
         <article><Palette /><span>Color</span><strong>{data.vehicle.color || "Not recorded"}</strong></article>
+      </section>
+      <section className={`oil-change-card ${data.vehicle.oilChangeStatus?.status || "current"}`}>
+        <Gauge size={24} />
+        <div>
+          <span>Oil change tracking</span>
+          <h2>{oilLabels[data.vehicle.oilChangeStatus?.status] || "Not set"}</h2>
+          <p>{oilHelper(data.vehicle)}</p>
+        </div>
+        <div className="oil-change-meta">
+          <small>Last service</small>
+          <strong>{data.vehicle.oilChange?.lastMileage ? `${Number(data.vehicle.oilChange.lastMileage).toLocaleString()} mi` : "Not set"}</strong>
+          <small>Next due</small>
+          <strong>{data.vehicle.oilChangeStatus?.nextMileage ? `${Number(data.vehicle.oilChangeStatus.nextMileage).toLocaleString()} mi` : "Not set"}</strong>
+          <small>Date target</small>
+          <strong>{data.vehicle.oilChangeStatus?.nextDate ? new Date(data.vehicle.oilChangeStatus.nextDate).toLocaleDateString() : "Not set"}</strong>
+        </div>
       </section>
       <section className="owner-card">
         <UserRound size={20} />

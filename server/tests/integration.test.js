@@ -106,17 +106,28 @@ test("vehicle CRUD works", async () => {
   const created = await request(app)
     .post("/api/vehicles")
     .set("Authorization", `Bearer ${token}`)
-    .send({ customer: customer._id, year: 2022, make: "Toyota", model: "Camry", mileage: 25000 })
+    .send({
+      customer: customer._id,
+      year: 2022,
+      make: "Toyota",
+      model: "Camry",
+      mileage: 25000,
+      oilChange: { lastMileage: 22000, intervalMiles: 3000, intervalMonths: 3 },
+    })
     .expect(201);
   vehicle = created.body;
   assert.equal(vehicle.customer._id, customer._id);
+  assert.equal(vehicle.oilChangeStatus.status, "overdue");
+  assert.equal(vehicle.oilChangeStatus.nextMileage, 25000);
 
   const updated = await request(app)
     .put(`/api/vehicles/${vehicle._id}`)
     .set("Authorization", `Bearer ${token}`)
-    .send({ mileage: 25100 })
+    .send({ mileage: 25100, oilChange: { lastMileage: 25100, intervalMiles: 3000, intervalMonths: 3 } })
     .expect(200);
   assert.equal(updated.body.mileage, 25100);
+  assert.equal(updated.body.oilChangeStatus.status, "current");
+  assert.equal(updated.body.oilChangeStatus.nextMileage, 28100);
 });
 
 test("work order CRUD and totals work", async () => {

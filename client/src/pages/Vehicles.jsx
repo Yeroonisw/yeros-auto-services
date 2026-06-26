@@ -4,7 +4,26 @@ import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 import { useNavigate } from "react-router-dom";
 
-const emptyVehicle = { customer: "", year: new Date().getFullYear(), make: "", model: "", vin: "", plate: "", color: "", mileage: 0 };
+const emptyVehicle = {
+  customer: "",
+  year: new Date().getFullYear(),
+  make: "",
+  model: "",
+  vin: "",
+  plate: "",
+  color: "",
+  mileage: 0,
+  oilChange: { lastDate: "", lastMileage: 0, intervalMiles: 3000, intervalMonths: 3, notes: "" },
+};
+const oilLabels = { current: "Current", due_soon: "Due soon", overdue: "Overdue" };
+
+function formatOilChange(vehicle) {
+  const status = vehicle.oilChangeStatus;
+  if (!status?.nextMileage) return "Not set";
+  const remaining = Number(status.milesRemaining || 0);
+  if (status.status === "overdue") return `${Math.abs(remaining).toLocaleString()} mi overdue`;
+  return `${remaining.toLocaleString()} mi left`;
+}
 
 export default function Vehicles() {
   const navigate = useNavigate();
@@ -36,6 +55,13 @@ export default function Vehicles() {
     setForm(vehicle ? {
       customer: vehicle.customer?._id || vehicle.customer, year: vehicle.year, make: vehicle.make, model: vehicle.model,
       vin: vehicle.vin || "", plate: vehicle.plate || "", color: vehicle.color || "", mileage: vehicle.mileage || 0,
+      oilChange: {
+        lastDate: vehicle.oilChange?.lastDate ? vehicle.oilChange.lastDate.slice(0, 10) : "",
+        lastMileage: vehicle.oilChange?.lastMileage || 0,
+        intervalMiles: vehicle.oilChange?.intervalMiles || 3000,
+        intervalMonths: vehicle.oilChange?.intervalMonths || 3,
+        notes: vehicle.oilChange?.notes || "",
+      },
     } : { ...emptyVehicle, customer: customers[0]?._id || "" });
     setModalOpen(true);
   }
@@ -44,8 +70,9 @@ export default function Vehicles() {
     event.preventDefault();
     setSaving(true);
     try {
-      if (editing) await api.put(`/vehicles/${editing._id}`, form);
-      else await api.post("/vehicles", form);
+      const payload = { ...form, oilChange: { ...form.oilChange, lastDate: form.oilChange.lastDate || null } };
+      if (editing) await api.put(`/vehicles/${editing._id}`, payload);
+      else await api.post("/vehicles", payload);
       setModalOpen(false);
       await load();
     } catch (requestError) {
@@ -76,11 +103,12 @@ export default function Vehicles() {
       <section className="panel">
         {loading ? <Loading /> : vehicles.length ? (
           <div className="table-wrap"><table>
-            <thead><tr><th>Vehicle</th><th>Customer</th><th>Plate / VIN</th><th>Mileage</th><th className="actions">Actions</th></tr></thead>
+            <thead><tr><th>Vehicle</th><th>Customer</th><th>Plate / VIN</th><th>Mileage</th><th>Oil change</th><th className="actions">Actions</th></tr></thead>
             <tbody>{vehicles.map((vehicle) => <tr key={vehicle._id}>
               <td><button className="record-link" onClick={() => navigate(`/vehicles/${vehicle._id}`)}>{vehicle.year} {vehicle.make} {vehicle.model}</button><small className="table-note">{vehicle.color || "Color not set"}</small></td>
               <td>{vehicle.customer?.name || "-"}</td><td>{vehicle.plate || "-"}<small className="table-note">{vehicle.vin || "VIN not set"}</small></td>
               <td>{Number(vehicle.mileage || 0).toLocaleString()} mi</td>
+              <td><span className={`status oil-${vehicle.oilChangeStatus?.status || "current"}`}>{oilLabels[vehicle.oilChangeStatus?.status] || "Not set"}</span><small className="table-note">{formatOilChange(vehicle)}</small></td>
               <td className="actions"><button className="text-button view-button" onClick={() => navigate(`/vehicles/${vehicle._id}`)}>View</button><button className="text-button" onClick={() => open(vehicle)}>Edit</button><button className="text-button danger" onClick={() => remove(vehicle)}>Delete</button></td>
             </tr>)}</tbody>
           </table></div>
@@ -96,6 +124,16 @@ export default function Vehicles() {
           <label>License plate<input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} /></label>
           <label>Mileage<input type="number" min="0" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: Number(e.target.value) })} /></label>
           <label className="span-2">VIN<input maxLength="17" value={form.vin} onChange={(e) => setForm({ ...form, vin: e.target.value })} /></label>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Oil change tracking</strong><span>Reminder by mileage/date</span></div>
+            <div className="oil-change-grid">
+              <label>Last oil change date<input type="date" value={form.oilChange.lastDate} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, lastDate: e.target.value } })} /></label>
+              <label>Last oil change mileage<input type="number" min="0" value={form.oilChange.lastMileage} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, lastMileage: Number(e.target.value) } })} /></label>
+              <label>Interval miles<input type="number" min="0" value={form.oilChange.intervalMiles} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMiles: Number(e.target.value) } })} /></label>
+              <label>Interval months<input type="number" min="0" value={form.oilChange.intervalMonths} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMonths: Number(e.target.value) } })} /></label>
+              <label className="span-2">Oil change notes<input value={form.oilChange.notes} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, notes: e.target.value } })} placeholder="Oil type, filter, brand..." /></label>
+            </div>
+          </div>
           <div className="form-actions span-2"><button type="button" className="button secondary" onClick={() => setModalOpen(false)}>Cancel</button><button className="button primary" disabled={saving}>{saving ? "Saving..." : "Save vehicle"}</button></div>
         </form>
       </Modal>}
