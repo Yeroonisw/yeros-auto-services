@@ -171,6 +171,9 @@ test("work order CRUD and totals work", async () => {
   assert.equal(vehicleAfterOilChange.body.vehicle.oilChange.lastMileage, 26000);
   assert.equal(vehicleAfterOilChange.body.vehicle.oilChange.intervalMiles, 5000);
   assert.equal(vehicleAfterOilChange.body.vehicle.oilChangeStatus.nextMileage, 31000);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChangeHistory.length, 1);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChangeHistory[0].mileage, 26000);
+  assert.equal(vehicleAfterOilChange.body.vehicle.oilChangeHistory[0].orderNumber, order.orderNumber);
 });
 
 test("customer history includes vehicles and repairs", async () => {

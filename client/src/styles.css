@@ -387,6 +387,14 @@ textarea { resize: vertical; }
 .oil-change-card p { margin: 0; color: #536177; font-size: 12px; }
 .oil-change-meta { display: grid; grid-template-columns: auto auto; gap: 5px 14px; align-items: center; }
 .oil-change-meta strong { color: #1d2939; font-size: 12px; text-align: right; }
+.oil-history-list { padding: 0 20px; }
+.oil-history-list article { display: flex; justify-content: space-between; gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.oil-history-list article:last-child { border-bottom: 0; }
+.oil-history-list strong, .oil-history-list span, .oil-history-list p { display: block; }
+.oil-history-list strong { color: #1d2939; font-size: 14px; }
+.oil-history-list span { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.oil-history-list p { margin: 7px 0 0; color: #536177; font-size: 11px; }
+.oil-history-list a, .oil-history-list small { flex: 0 0 auto; color: #244e9c; font-size: 11px; font-weight: 800; text-decoration: none; }
 .vehicle-timeline { padding: 0 20px; }
 .vehicle-timeline article { display: grid; grid-template-columns: 120px 1fr 100px; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); }
 .vehicle-timeline article:last-child { border-bottom: 0; }
@@ -612,6 +620,7 @@ textarea { resize: vertical; }
   .oil-change-card { grid-template-columns: 1fr; }
   .oil-change-meta { grid-template-columns: 1fr; }
   .oil-change-meta strong { text-align: left; }
+  .oil-history-list article { flex-direction: column; gap: 8px; }
   .vehicle-timeline article { grid-template-columns: 1fr; gap: 8px; }
   .timeline-total { text-align: left; }
   .profit-preview { flex-direction: column; gap: 6px; }

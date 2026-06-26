@@ -34,13 +34,32 @@ async function syncVehicleFromWorkOrder(order) {
   }
 
   if (oilChange.performed) {
+    const serviceDate = oilChange.serviceDate || order.completedAt || order.openedAt || new Date();
+    const lastMileage = oilMileage || Number(vehicle.mileage || 0);
+    const intervalMiles = Number(oilChange.intervalMiles || vehicle.oilChange?.intervalMiles || 3000);
+    const intervalMonths = Number(oilChange.intervalMonths || vehicle.oilChange?.intervalMonths || 3);
+    const notes = oilChange.notes || vehicle.oilChange?.notes || "";
     vehicle.oilChange = {
-      lastDate: oilChange.serviceDate || order.completedAt || order.openedAt || new Date(),
-      lastMileage: oilMileage || Number(vehicle.mileage || 0),
-      intervalMiles: Number(oilChange.intervalMiles || vehicle.oilChange?.intervalMiles || 3000),
-      intervalMonths: Number(oilChange.intervalMonths || vehicle.oilChange?.intervalMonths || 3),
-      notes: oilChange.notes || vehicle.oilChange?.notes || "",
+      lastDate: serviceDate,
+      lastMileage,
+      intervalMiles,
+      intervalMonths,
+      notes,
     };
+    const historyEntry = {
+      serviceDate,
+      mileage: lastMileage,
+      intervalMiles,
+      intervalMonths,
+      notes,
+      workOrder: order._id,
+      orderNumber: order.orderNumber,
+    };
+    vehicle.oilChangeHistory = Array.isArray(vehicle.oilChangeHistory) ? vehicle.oilChangeHistory : [];
+    const existingIndex = vehicle.oilChangeHistory.findIndex((entry) => String(entry.workOrder || "") === String(order._id));
+    if (existingIndex >= 0) vehicle.oilChangeHistory[existingIndex] = historyEntry;
+    else vehicle.oilChangeHistory.push(historyEntry);
+    vehicle.oilChangeHistory.sort((left, right) => new Date(right.serviceDate || 0) - new Date(left.serviceDate || 0));
     changed = true;
   }
 

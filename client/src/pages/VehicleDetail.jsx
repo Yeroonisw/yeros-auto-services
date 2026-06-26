@@ -55,6 +55,19 @@ export default function VehicleDetail() {
           <strong>{data.vehicle.oilChangeStatus?.nextDate ? new Date(data.vehicle.oilChangeStatus.nextDate).toLocaleDateString() : "Not set"}</strong>
         </div>
       </section>
+      <section className="panel profile-section">
+        <div className="panel-heading"><h2>Oil change history</h2><p>Every oil change saved from work orders.</p></div>
+        {data.vehicle.oilChangeHistory?.length ? <div className="oil-history-list">
+          {data.vehicle.oilChangeHistory.map((entry, index) => <article key={`${entry.workOrder || index}-${entry.mileage}`}>
+            <div>
+              <strong>{Number(entry.mileage || 0).toLocaleString()} mi</strong>
+              <span>{entry.serviceDate ? new Date(entry.serviceDate).toLocaleDateString() : "No date"} · Next {Number((entry.mileage || 0) + (entry.intervalMiles || 0)).toLocaleString()} mi</span>
+              {entry.notes && <p>{entry.notes}</p>}
+            </div>
+            {entry.workOrder ? <Link to={`/work-orders/${entry.workOrder}`}>{entry.orderNumber || "Work order"}</Link> : <small>Manual entry</small>}
+          </article>)}
+        </div> : <Empty>No oil change history yet.</Empty>}
+      </section>
       <section className="owner-card">
         <UserRound size={20} />
         <div><span>Owner</span><Link to={`/customers/${data.vehicle.customer?._id}`}>{data.vehicle.customer?.name}</Link><small>{data.vehicle.customer?.phone} · {data.vehicle.customer?.email || "No email"}</small></div>

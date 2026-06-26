@@ -18,6 +18,18 @@ const vehicleSchema = new mongoose.Schema(
       intervalMonths: { type: Number, min: 0, default: 3 },
       notes: { type: String, trim: true },
     },
+    oilChangeHistory: {
+      type: [{
+        serviceDate: Date,
+        mileage: { type: Number, min: 0, default: 0 },
+        intervalMiles: { type: Number, min: 0, default: 3000 },
+        intervalMonths: { type: Number, min: 0, default: 3 },
+        notes: { type: String, trim: true },
+        workOrder: { type: mongoose.Schema.Types.ObjectId, ref: "WorkOrder" },
+        orderNumber: { type: String, trim: true },
+      }],
+      default: [],
+    },
   },
   {
     timestamps: true,
