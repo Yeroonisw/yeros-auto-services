@@ -9,6 +9,7 @@ const emptyVehicle = {
   year: new Date().getFullYear(),
   make: "",
   model: "",
+  engine: "",
   vin: "",
   plate: "",
   color: "",
@@ -16,6 +17,24 @@ const emptyVehicle = {
   oilChange: { lastDate: "", lastMileage: 0, intervalMiles: 3000, intervalMonths: 3, notes: "" },
 };
 const oilLabels = { current: "Current", due_soon: "Due soon", overdue: "Overdue" };
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 50 }, (_, index) => currentYear + 1 - index);
+const makeOptions = ["Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jeep", "Kia", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mitsubishi", "Nissan", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"];
+const commonModels = {
+  Chevrolet: ["Colorado", "Cruze", "Equinox", "Impala", "Malibu", "Silverado 1500", "Suburban", "Tahoe", "Traverse"],
+  Dodge: ["Challenger", "Charger", "Durango", "Grand Caravan", "Journey", "Ram 1500"],
+  Ford: ["Bronco", "Edge", "Escape", "Explorer", "F-150", "F-250", "Fusion", "Mustang", "Ranger", "Transit"],
+  GMC: ["Acadia", "Canyon", "Sierra 1500", "Terrain", "Yukon"],
+  Honda: ["Accord", "Civic", "CR-V", "Fit", "HR-V", "Odyssey", "Pilot", "Ridgeline"],
+  Hyundai: ["Accent", "Elantra", "Kona", "Palisade", "Santa Fe", "Sonata", "Tucson"],
+  Jeep: ["Cherokee", "Compass", "Gladiator", "Grand Cherokee", "Patriot", "Renegade", "Wrangler"],
+  Kia: ["Forte", "K5", "Optima", "Rio", "Sedona", "Sorento", "Soul", "Sportage", "Telluride"],
+  Nissan: ["Altima", "Frontier", "Maxima", "Murano", "Pathfinder", "Rogue", "Sentra", "Titan", "Versa"],
+  Ram: ["1500", "2500", "3500", "ProMaster"],
+  Toyota: ["4Runner", "Avalon", "Camry", "Corolla", "Highlander", "Prius", "RAV4", "Sequoia", "Sienna", "Tacoma", "Tundra"],
+};
+const engineOptions = ["1.4L I4", "1.5L I4", "1.6L I4", "1.8L I4", "2.0L I4", "2.4L I4", "2.5L I4", "2.7L I4", "3.0L V6", "3.5L V6", "3.6L V6", "3.7L V6", "4.0L V6", "4.6L V8", "5.0L V8", "5.3L V8", "5.7L V8", "6.2L V8", "6.4L V8", "Diesel", "Hybrid", "Electric"];
+const colorOptions = ["Black", "White", "Silver", "Gray", "Red", "Blue", "Green", "Brown", "Gold", "Beige", "Orange", "Yellow", "Purple"];
 
 function formatOilChange(vehicle) {
   const status = vehicle.oilChangeStatus;
@@ -54,7 +73,7 @@ export default function Vehicles() {
     setEditing(vehicle);
     setForm(vehicle ? {
       customer: vehicle.customer?._id || vehicle.customer, year: vehicle.year, make: vehicle.make, model: vehicle.model,
-      vin: vehicle.vin || "", plate: vehicle.plate || "", color: vehicle.color || "", mileage: vehicle.mileage || 0,
+      engine: vehicle.engine || "", vin: vehicle.vin || "", plate: vehicle.plate || "", color: vehicle.color || "", mileage: vehicle.mileage || 0,
       oilChange: {
         lastDate: vehicle.oilChange?.lastDate ? vehicle.oilChange.lastDate.slice(0, 10) : "",
         lastMileage: vehicle.oilChange?.lastMileage || 0,
@@ -105,7 +124,7 @@ export default function Vehicles() {
           <div className="table-wrap"><table>
             <thead><tr><th>Vehicle</th><th>Customer</th><th>Plate / VIN</th><th>Mileage</th><th>Oil change</th><th className="actions">Actions</th></tr></thead>
             <tbody>{vehicles.map((vehicle) => <tr key={vehicle._id}>
-              <td><button className="record-link" onClick={() => navigate(`/vehicles/${vehicle._id}`)}>{vehicle.year} {vehicle.make} {vehicle.model}</button><small className="table-note">{vehicle.color || "Color not set"}</small></td>
+              <td><button className="record-link" onClick={() => navigate(`/vehicles/${vehicle._id}`)}>{vehicle.year} {vehicle.make} {vehicle.model}</button><small className="table-note">{vehicle.engine || vehicle.color || "Engine not set"}</small></td>
               <td>{vehicle.customer?.name || "-"}</td><td>{vehicle.plate || "-"}<small className="table-note">{vehicle.vin || "VIN not set"}</small></td>
               <td>{Number(vehicle.mileage || 0).toLocaleString()} mi</td>
               <td><span className={`status oil-${vehicle.oilChangeStatus?.status || "current"}`}>{oilLabels[vehicle.oilChangeStatus?.status] || "Not set"}</span><small className="table-note">{formatOilChange(vehicle)}</small></td>
@@ -117,10 +136,11 @@ export default function Vehicles() {
       {modalOpen && <Modal title={editing ? "Edit vehicle" : "New vehicle"} onClose={() => setModalOpen(false)}>
         <form className="form-grid" onSubmit={submit}>
           <label className="span-2">Customer<select value={form.customer} onChange={(e) => setForm({ ...form, customer: e.target.value })} required><option value="">Select customer</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
-          <label>Year<input type="number" min="1900" max="2100" value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} required /></label>
-          <label>Make<input value={form.make} onChange={(e) => setForm({ ...form, make: e.target.value })} required /></label>
-          <label>Model<input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} required /></label>
-          <label>Color<input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></label>
+          <label>Year<select value={form.year} onChange={(e) => setForm({ ...form, year: Number(e.target.value) })} required>{yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+          <label>Make<input list="vehicle-makes" value={form.make} onChange={(e) => setForm({ ...form, make: e.target.value, model: commonModels[e.target.value]?.includes(form.model) ? form.model : "" })} required /><datalist id="vehicle-makes">{makeOptions.map((make) => <option key={make} value={make} />)}</datalist></label>
+          <label>Model<input list="vehicle-models" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} required /><datalist id="vehicle-models">{(commonModels[form.make] || []).map((model) => <option key={model} value={model} />)}</datalist></label>
+          <label>Engine<input list="vehicle-engines" value={form.engine} onChange={(e) => setForm({ ...form, engine: e.target.value })} placeholder="3.6L V6" /><datalist id="vehicle-engines">{engineOptions.map((engine) => <option key={engine} value={engine} />)}</datalist></label>
+          <label>Color<input list="vehicle-colors" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /><datalist id="vehicle-colors">{colorOptions.map((color) => <option key={color} value={color} />)}</datalist></label>
           <label>License plate<input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} /></label>
           <label>Mileage<input type="number" min="0" value={form.mileage} onChange={(e) => setForm({ ...form, mileage: Number(e.target.value) })} /></label>
           <label className="span-2">VIN<input maxLength="17" value={form.vin} onChange={(e) => setForm({ ...form, vin: e.target.value })} /></label>

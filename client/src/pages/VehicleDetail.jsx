@@ -35,7 +35,7 @@ export default function VehicleDetail() {
       </section>
       <section className="detail-summary-grid">
         <article><Hash /><span>VIN</span><strong>{data.vehicle.vin || "Not recorded"}</strong></article>
-        <article><CarFront /><span>License plate</span><strong>{data.vehicle.plate || "Not recorded"}</strong></article>
+        <article><CarFront /><span>License plate</span><strong>{data.vehicle.plate || "Not recorded"}</strong><small>{data.vehicle.engine || "Engine not recorded"}</small></article>
         <article><Gauge /><span>Mileage</span><strong>{Number(data.vehicle.mileage || 0).toLocaleString()} mi</strong></article>
         <article><Palette /><span>Color</span><strong>{data.vehicle.color || "Not recorded"}</strong></article>
       </section>

@@ -7,7 +7,7 @@ import { streamDocument } from "../services/pdf.js";
 const router = express.Router();
 const populate = [
   { path: "customer", select: "name phone email" },
-  { path: "vehicle", select: "year make model plate vin customer" },
+  { path: "vehicle", select: "year make model engine plate vin customer" },
 ];
 
 async function validateRelations(body) {
@@ -73,7 +73,7 @@ router.get("/:id", async (req, res, next) => {
     const order = await WorkOrder.findById(req.params.id)
       .populate([
         { path: "customer", select: "name phone email address notes" },
-        { path: "vehicle", select: "year make model plate vin color mileage customer oilChange" },
+        { path: "vehicle", select: "year make model engine plate vin color mileage customer oilChange" },
         { path: "sourceEstimate", select: "estimateNumber status" },
       ]);
     if (!order) return res.status(404).json({ message: "Work order not found" });

@@ -111,12 +111,14 @@ test("vehicle CRUD works", async () => {
       year: 2022,
       make: "Toyota",
       model: "Camry",
+      engine: "2.5L I4",
       mileage: 25000,
       oilChange: { lastMileage: 22000, intervalMiles: 3000, intervalMonths: 3 },
     })
     .expect(201);
   vehicle = created.body;
   assert.equal(vehicle.customer._id, customer._id);
+  assert.equal(vehicle.engine, "2.5L I4");
   assert.equal(vehicle.oilChangeStatus.status, "overdue");
   assert.equal(vehicle.oilChangeStatus.nextMileage, 25000);
 
