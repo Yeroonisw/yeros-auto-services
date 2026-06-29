@@ -43,6 +43,7 @@ export default function Sidebar({ open, onClose }) {
       <div className="brand">
         <img src="/yeros-auto-logo.png" alt="Yeros Auto Services LLC" className="sidebar-logo" />
       </div>
+      <div className="sidebar-kicker">Workspace</div>
       <nav>
         {links.map((link) => {
           const Icon = link.icon;

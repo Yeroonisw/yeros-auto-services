@@ -143,15 +143,23 @@ const pricingSections = {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem("yeros_public_language");
-    if (saved === "en" || saved === "es") return saved;
-    return navigator.language?.toLowerCase().startsWith("es") ? "es" : "en";
+    try {
+      const saved = window.localStorage?.getItem("yeros_public_language");
+      if (saved === "en" || saved === "es") return saved;
+      return window.navigator?.language?.toLowerCase().startsWith("es") ? "es" : "en";
+    } catch {
+      return "en";
+    }
   });
   const t = copy[language];
 
   function changeLanguage(value) {
     setLanguage(value);
-    localStorage.setItem("yeros_public_language", value);
+    try {
+      window.localStorage?.setItem("yeros_public_language", value);
+    } catch {
+      // Browser storage can be blocked; language still changes for this visit.
+    }
     document.documentElement.lang = value;
   }
 

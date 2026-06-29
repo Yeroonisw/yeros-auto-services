@@ -1,3 +1,4 @@
+import { Component } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import AppLayout from "./components/AppLayout.jsx";
@@ -18,6 +19,38 @@ import ScannerReports from "./pages/ScannerReports.jsx";
 import ScannerReportDetail from "./pages/ScannerReportDetail.jsx";
 import AutelImport from "./pages/AutelImport.jsx";
 import AutelLive from "./pages/AutelLive.jsx";
+import { business } from "./config/business.js";
+
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error) {
+    console.error("App render failed", error);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+
+    return <div className="public-site fallback-site">
+      <main className="fallback-panel">
+        <img src="/yeros-auto-logo.png" alt={business.name} />
+        <h1>Yeros Auto Services LLC</h1>
+        <p>Mobile mechanic service available 24/7. If this page did not load correctly, call or message us directly.</p>
+        <div className="hero-actions">
+          <a className="public-button red" href={"tel:" + business.phone}>Call {business.phoneDisplay}</a>
+          <a className="public-button whatsapp" href={"https://wa.me/" + business.whatsapp}>WhatsApp</a>
+        </div>
+      </main>
+    </div>;
+  }
+}
 
 function ProtectedRoute() {
   const { authenticated } = useAuth();
@@ -26,6 +59,7 @@ function ProtectedRoute() {
 
 export default function App() {
   return (
+    <AppErrorBoundary>
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
@@ -50,5 +84,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </AppErrorBoundary>
   );
 }
