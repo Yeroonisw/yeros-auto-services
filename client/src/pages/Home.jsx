@@ -1,7 +1,7 @@
 import {
   ArrowRight, BadgeCheck, BatteryCharging, CalendarCheck, CheckCircle2, Clock3,
   Disc3, Facebook, Gauge, House, Instagram, Mail, MapPin, Menu, MessageCircle,
-  Phone, Settings, ShieldCheck, X,
+  Phone, Settings, ShieldCheck, Wrench, X,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
