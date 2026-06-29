@@ -1,7 +1,7 @@
 import {
   ArrowRight, BadgeCheck, BatteryCharging, CalendarCheck, CheckCircle2, Clock3,
   Disc3, Facebook, Gauge, House, Instagram, Mail, MapPin, Menu, MessageCircle,
-  Phone, Settings, ShieldCheck, Sparkles, Wrench, X,
+  Phone, Settings, ShieldCheck, X,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -193,12 +193,9 @@ export default function Home() {
         </div>
 
         <div className="hero-visual" aria-hidden="true">
-          <div className="hero-scene">
-            <div className="scene-sun" />
-            <div className="scene-van"><div className="van-roof" /><div className="van-window" /><div className="van-stripe" /><div className="van-wheel left" /><div className="van-wheel right" /></div>
-            <div className="scene-car"><div className="car-hood" /><div className="car-window" /><div className="car-wheel left" /><div className="car-wheel right" /></div>
-            <div className="scene-toolbox"><Wrench size={19} /></div>
-            <div className="scene-card"><Sparkles /><strong>{t.visualTitle}</strong><span>{t.visualText}</span></div>
+          <div className="hero-photo-card">
+            <img src="/mobile-mechanic-hero.png" alt="" loading="eager" />
+            <div className="scene-card hero-photo-caption"><CheckCircle2 /><strong>{t.visualTitle}</strong><span>{t.visualText}</span></div>
           </div>
           <div className="hero-contact-card"><House /><div><span>{t.needService}</span><strong>{t.goToYou}</strong></div></div>
         </div>

@@ -750,3 +750,15 @@ textarea { resize: vertical; }
   .public-strip > div { border-right: 0; }
   .about-points { grid-template-columns: 1fr; }
 }
+
+
+/* Real hero image */
+.hero-photo-card { position: relative; min-height: 470px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: #111827; box-shadow: 0 34px 80px rgba(0,0,0,.32); }
+.hero-photo-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,12,19,.45), rgba(8,12,19,.08) 42%, rgba(214,40,40,.12)); pointer-events: none; }
+.hero-photo-card > img { width: 100%; height: 100%; min-height: 470px; display: block; object-fit: cover; object-position: center; }
+.hero-photo-card .hero-photo-caption { z-index: 2; }
+
+@media (max-width: 760px) {
+  .hero-photo-card { min-height: 360px; }
+  .hero-photo-card > img { min-height: 360px; }
+}
