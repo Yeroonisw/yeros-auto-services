@@ -63,6 +63,13 @@ export default function WorkOrderDetail() {
 
   useEffect(() => { loadOrder(); }, [id]);
 
+  useEffect(() => {
+    if (searchParams.get("edit") === "1" && order) {
+      setForm(orderToForm(order));
+      setEditOpen(true);
+    }
+  }, [searchParams, order]);
+
   async function saveStatus() {
     if (!status || status === order.status) return;
     setSavingStatus(true);
@@ -89,6 +96,7 @@ export default function WorkOrderDetail() {
   function openEditor() {
     if (order) setForm(orderToForm(order));
     setEditOpen(true);
+    setSearchParams({ edit: "1" });
   }
 
   function closeEditor() {
@@ -148,35 +156,10 @@ export default function WorkOrderDetail() {
       <div className="detail-topbar">
         <Link className="back-link" to="/work-orders"><ArrowLeft size={17} /> Work orders</Link>
         <div className="detail-action-row">
-          <button className="button secondary" onClick={openEditor}>Edit order</button>
+          <button className="button primary" onClick={openEditor}>Edit order now</button>
           <button className="button primary" onClick={downloadInvoice}><Download size={16} /> Download invoice</button>
         </div>
       </div>
-      <section className="detail-hero">
-        <div>
-          <p className="eyebrow">Work order</p>
-          <h1>{order.orderNumber}</h1>
-          <p>{order.customer?.name} - {order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</p>
-        </div>
-        <div className="detail-status-editor">
-          <span className={`status large ${order.status}`}>{labels[order.status]}</span>
-          <label>
-            <span>Change status</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)} disabled={savingStatus}>
-              {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </label>
-          <button className="button primary" onClick={saveStatus} disabled={savingStatus || status === order.status}>
-            {savingStatus ? "Saving..." : "Save status"}
-          </button>
-        </div>
-      </section>
-      <section className="detail-summary-grid">
-        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}</small></article>
-        <article><CarFront /><span>Vehicle</span><strong>{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</strong><small>{order.vehicle?.plate || "No plate"} - {Number(order.vehicle?.mileage || 0).toLocaleString()} mi</small></article>
-        <article><Hash /><span>VIN</span><strong>{order.vehicle?.vin || "Not recorded"}</strong><small>{order.vehicle?.color || "Color not recorded"}</small></article>
-        <article><CalendarDays /><span>Opened</span><strong>{new Date(order.openedAt).toLocaleDateString()}</strong><small>{order.completedAt ? `Completed ${new Date(order.completedAt).toLocaleDateString()}` : "Not completed"}</small></article>
-      </section>
       {editOpen && form && <section className="panel work-order-editor-panel">
         <div className="panel-heading">
           <div><h2>Edit work order</h2><p>Update services, prices, labor, diagnostics, oil change and notes.</p></div>
@@ -230,6 +213,31 @@ export default function WorkOrderDetail() {
           <div className="form-actions span-2"><button type="button" className="button secondary" onClick={closeEditor}>Cancel</button><button className="button primary" disabled={savingOrder}><Save size={16} /> {savingOrder ? "Saving..." : "Save changes"}</button></div>
         </form>
       </section>}
+      <section className="detail-hero">
+        <div>
+          <p className="eyebrow">Work order</p>
+          <h1>{order.orderNumber}</h1>
+          <p>{order.customer?.name} - {order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</p>
+        </div>
+        <div className="detail-status-editor">
+          <span className={`status large ${order.status}`}>{labels[order.status]}</span>
+          <label>
+            <span>Change status</span>
+            <select value={status} onChange={(event) => setStatus(event.target.value)} disabled={savingStatus}>
+              {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <button className="button primary" onClick={saveStatus} disabled={savingStatus || status === order.status}>
+            {savingStatus ? "Saving..." : "Save status"}
+          </button>
+        </div>
+      </section>
+      <section className="detail-summary-grid">
+        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}</small></article>
+        <article><CarFront /><span>Vehicle</span><strong>{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</strong><small>{order.vehicle?.plate || "No plate"} - {Number(order.vehicle?.mileage || 0).toLocaleString()} mi</small></article>
+        <article><Hash /><span>VIN</span><strong>{order.vehicle?.vin || "Not recorded"}</strong><small>{order.vehicle?.color || "Color not recorded"}</small></article>
+        <article><CalendarDays /><span>Opened</span><strong>{new Date(order.openedAt).toLocaleDateString()}</strong><small>{order.completedAt ? `Completed ${new Date(order.completedAt).toLocaleDateString()}` : "Not completed"}</small></article>
+      </section>
       <div className="detail-columns">
         <section className="panel detail-section">
           <div className="panel-heading"><h2>Services and parts</h2><p>Complete breakdown of this repair.</p></div>
