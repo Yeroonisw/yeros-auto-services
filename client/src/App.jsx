@@ -8,6 +8,7 @@ import Customers from "./pages/Customers.jsx";
 import Vehicles from "./pages/Vehicles.jsx";
 import WorkOrders from "./pages/WorkOrders.jsx";
 import Estimates from "./pages/Estimates.jsx";
+import Appointments from "./pages/Appointments.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Manuals from "./pages/Manuals.jsx";
 import WorkOrderDetail from "./pages/WorkOrderDetail.jsx";

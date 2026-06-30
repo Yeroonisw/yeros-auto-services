@@ -14,6 +14,7 @@ import assistantRoutes from "./routes/assistant.js";
 import searchRoutes from "./routes/search.js";
 import scannerReportRoutes from "./routes/scannerReports.js";
 import receiptReaderRoutes from "./routes/receiptReader.js";
+import appointmentRoutes from "./routes/appointments.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 
