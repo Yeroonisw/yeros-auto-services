@@ -78,6 +78,7 @@ export default function App() {
           <Route path="/autel-import" element={<AutelImport />} />
           <Route path="/autel-live" element={<AutelLive />} />
           <Route path="/estimates" element={<Estimates />} />
+          <Route path="/appointments" element={<Appointments />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />
           <Route path="/search" element={<SearchResults />} />
