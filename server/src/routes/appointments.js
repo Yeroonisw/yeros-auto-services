@@ -1,7 +1,8 @@
-﻿import express from "express";
+import express from "express";
 import Appointment from "../models/Appointment.js";
 import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
+import WorkOrder from "../models/WorkOrder.js";
 
 const router = express.Router();
 const populate = [
@@ -35,6 +36,47 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+
+router.get("/:id", async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id).populate(populate);
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    res.json(appointment);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/:id/work-order", async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id).populate(populate);
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    if (!appointment.vehicle) return res.status(400).json({ message: "Select a vehicle before creating a work order" });
+
+    const order = await WorkOrder.create({
+      customer: appointment.customer._id || appointment.customer,
+      vehicle: appointment.vehicle._id || appointment.vehicle,
+      status: "pending",
+      services: [{ description: appointment.title || appointment.serviceType || "Scheduled appointment", quantity: 1, price: 0, cost: 0 }],
+      notes: [
+        `Created from appointment scheduled ${new Date(appointment.scheduledAt).toLocaleString()}.`,
+        appointment.serviceType ? `Service type: ${appointment.serviceType}.` : "",
+        appointment.location ? `Location: ${appointment.location}.` : "",
+        appointment.notes || "",
+      ].filter(Boolean).join("\n"),
+      openedAt: new Date(),
+    });
+
+    appointment.status = "in_progress";
+    await appointment.save();
+    res.status(201).json(await order.populate([
+      { path: "customer", select: "name phone email" },
+      { path: "vehicle", select: "year make model engine plate vin customer" },
+    ]));
+  } catch (error) {
+    next(error);
+  }
+});
 router.post("/", async (req, res, next) => {
   try {
     const relationError = await validateRelations(req.body);

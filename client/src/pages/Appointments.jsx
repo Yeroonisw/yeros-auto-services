@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AlertTriangle, CalendarCheck2, CalendarPlus, CheckCircle2, Clock3, MapPin, Phone, PlayCircle, Plus, XCircle } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
@@ -35,6 +36,7 @@ function dateTimeInputValue(value) {
 }
 
 export default function Appointments() {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -188,8 +190,8 @@ export default function Appointments() {
             <span>{new Date(appointment.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
           </div>
           <div className="appointment-main">
-            <div className="appointment-title-row"><h3>{appointment.title}</h3><div className="appointment-badges">{appointment.priority === "urgent" && <span className="priority-badge">Urgent</span>}<span className={"status appointment-" + appointment.status}>{statusLabels[appointment.status]}</span></div></div>
-            <p>{appointment.customer?.name || "Customer not set"}{appointment.vehicle ? ` Â· ${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : ""}</p>
+            <div className="appointment-title-row"><button className="appointment-title-link" onClick={() => navigate(`/appointments/${appointment._id}`)}>{appointment.title}</button><div className="appointment-badges">{appointment.priority === "urgent" && <span className="priority-badge">Urgent</span>}<span className={"status appointment-" + appointment.status}>{statusLabels[appointment.status]}</span></div></div>
+            <p>{appointment.customer?.name || "Customer not set"}{appointment.vehicle ? ` - ${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : ""}</p>
             <div className="appointment-meta">
               <span><Clock3 size={14} /> {appointment.durationMinutes || 60} min</span>
               {appointment.location && <span><MapPin size={14} /> {appointment.location}</span>}
@@ -198,6 +200,7 @@ export default function Appointments() {
             {appointment.notes && <small>{appointment.notes}</small>}
           </div>
           <div className="appointment-actions">
+            <button className="text-button view-button" onClick={() => navigate(`/appointments/${appointment._id}`)}>View profile</button>
             {appointment.status === "scheduled" && <button className="text-button view-button" onClick={() => updateStatus(appointment, "confirmed")}><CheckCircle2 size={13} /> Confirm</button>}
             {["scheduled", "confirmed"].includes(appointment.status) && <button className="text-button" onClick={() => updateStatus(appointment, "in_progress")}><PlayCircle size={13} /> Start</button>}
             {appointment.status !== "completed" && <button className="text-button view-button" onClick={() => updateStatus(appointment, "completed")}><CheckCircle2 size={13} /> Done</button>}

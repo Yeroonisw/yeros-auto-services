@@ -1028,3 +1028,35 @@ tbody tr { transition: background .14s ease, box-shadow .14s ease; }
   .appointment-badges { justify-content: flex-start; }
   .appointment-actions { display: grid; grid-template-columns: 1fr 1fr; }
 }
+
+/* Appointment detail profile */
+.appointment-title-link {
+  padding: 0;
+  color: #172033;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: left;
+}
+.appointment-title-link:hover { color: var(--red); }
+.appointment-detail-hero { background: radial-gradient(circle at 82% 16%, rgba(214,40,40,.25), transparent 28%), linear-gradient(135deg, #111827, #28364e); }
+.appointment-profile-list { display: grid; gap: 12px; padding: 20px; }
+.appointment-profile-list > div {
+  display: grid;
+  grid-template-columns: auto 120px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #e4eaf2;
+  border-radius: 9px;
+  background: #fbfcfe;
+}
+.appointment-profile-list svg { color: var(--red); }
+.appointment-profile-list span { color: #667085; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.appointment-profile-list strong { color: #172033; font-size: 13px; }
+.warning-note { color: #b42318; background: #fff5f5; border-radius: 8px; }
+@media (max-width: 760px) {
+  .appointment-profile-list > div { grid-template-columns: auto 1fr; }
+  .appointment-profile-list strong { grid-column: 2; }
+}
