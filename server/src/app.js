@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import cors from "cors";
 import fs from "node:fs";
 import path from "node:path";
@@ -37,7 +37,7 @@ export function createApp() {
   app.use("/api/assistant", requireAuth, assistantRoutes);
   app.use("/api/search", requireAuth, searchRoutes);
   app.use("/api/scanner-reports", requireAuth, scannerReportRoutes);
-  app.use("/api/receipt-reader", requireAuth, receiptReaderRoutes);
+  app.use("/api/receipt-reader", requireAuth, receiptReaderRoutes);`r`n  app.use("/api/appointments", requireAuth, appointmentRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
     app.use(express.static(clientDistPath));
@@ -60,3 +60,4 @@ export async function ensureAdmin() {
     console.log(`Admin user created: ${email}`);
   }
 }
+
