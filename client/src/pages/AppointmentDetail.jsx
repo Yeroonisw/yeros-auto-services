@@ -36,7 +36,7 @@ export default function AppointmentDetail() {
     setError("");
     try {
       const { data } = await api.post(`/appointments/${id}/work-order`);
-      navigate(`/work-orders/${data._id}`);
+      navigate(`/work-orders/${data._id}?edit=1`);
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
