@@ -1,5 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, Clock3, MapPin, Phone, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, CalendarCheck2, CalendarPlus, CheckCircle2, Clock3, MapPin, Phone, PlayCircle, Plus, XCircle } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
@@ -68,6 +68,14 @@ export default function Appointments() {
   useEffect(() => { load(); }, [filter]);
 
   const customerVehicles = useMemo(() => vehicles.filter((vehicle) => (vehicle.customer?._id || vehicle.customer) === form.customer), [vehicles, form.customer]);
+  const appointmentStats = useMemo(() => {
+    const today = new Date().toDateString();
+    return {
+      today: appointments.filter((appointment) => new Date(appointment.scheduledAt).toDateString() === today).length,
+      urgent: appointments.filter((appointment) => appointment.priority === "urgent" && !["completed", "cancelled", "no_show"].includes(appointment.status)).length,
+      confirmed: appointments.filter((appointment) => appointment.status === "confirmed").length,
+    };
+  }, [appointments]);
 
   function open(appointment = null) {
     setEditing(appointment);
@@ -114,6 +122,27 @@ export default function Appointments() {
     }
   }
 
+  async function updateStatus(appointment, status) {
+    setError("");
+    try {
+      await api.put(`/appointments/${appointment._id}`, {
+        customer: appointment.customer?._id || appointment.customer,
+        vehicle: appointment.vehicle?._id || appointment.vehicle || null,
+        title: appointment.title,
+        serviceType: appointment.serviceType,
+        status,
+        scheduledAt: appointment.scheduledAt,
+        durationMinutes: appointment.durationMinutes,
+        location: appointment.location || "",
+        priority: appointment.priority || "normal",
+        notes: appointment.notes || "",
+      });
+      await load();
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    }
+  }
+
   async function remove(appointment) {
     if (!window.confirm(`Delete appointment for ${appointment.customer?.name || "customer"}?`)) return;
     try {
@@ -131,6 +160,12 @@ export default function Appointments() {
     </div>
     {!customers.length && !loading && <Alert message="Add a customer before creating an appointment." onClose={() => {}} />}
     <Alert message={error} onClose={() => setError("")} />
+
+    <section className="appointment-summary-grid">
+      <article><CalendarCheck2 /><span>Today</span><strong>{appointmentStats.today}</strong></article>
+      <article><AlertTriangle /><span>Urgent</span><strong>{appointmentStats.urgent}</strong></article>
+      <article><CheckCircle2 /><span>Confirmed</span><strong>{appointmentStats.confirmed}</strong></article>
+    </section>
 
     <section className="appointment-toolbar">
       <div>
@@ -153,8 +188,8 @@ export default function Appointments() {
             <span>{new Date(appointment.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
           </div>
           <div className="appointment-main">
-            <div className="appointment-title-row"><h3>{appointment.title}</h3><span className={"status appointment-" + appointment.status}>{statusLabels[appointment.status]}</span></div>
-            <p>{appointment.customer?.name || "Customer not set"}{appointment.vehicle ? ` · ${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : ""}</p>
+            <div className="appointment-title-row"><h3>{appointment.title}</h3><div className="appointment-badges">{appointment.priority === "urgent" && <span className="priority-badge">Urgent</span>}<span className={"status appointment-" + appointment.status}>{statusLabels[appointment.status]}</span></div></div>
+            <p>{appointment.customer?.name || "Customer not set"}{appointment.vehicle ? ` Â· ${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : ""}</p>
             <div className="appointment-meta">
               <span><Clock3 size={14} /> {appointment.durationMinutes || 60} min</span>
               {appointment.location && <span><MapPin size={14} /> {appointment.location}</span>}
@@ -163,6 +198,10 @@ export default function Appointments() {
             {appointment.notes && <small>{appointment.notes}</small>}
           </div>
           <div className="appointment-actions">
+            {appointment.status === "scheduled" && <button className="text-button view-button" onClick={() => updateStatus(appointment, "confirmed")}><CheckCircle2 size={13} /> Confirm</button>}
+            {["scheduled", "confirmed"].includes(appointment.status) && <button className="text-button" onClick={() => updateStatus(appointment, "in_progress")}><PlayCircle size={13} /> Start</button>}
+            {appointment.status !== "completed" && <button className="text-button view-button" onClick={() => updateStatus(appointment, "completed")}><CheckCircle2 size={13} /> Done</button>}
+            {!["cancelled", "completed"].includes(appointment.status) && <button className="text-button danger" onClick={() => updateStatus(appointment, "cancelled")}><XCircle size={13} /> Cancel</button>}
             <button className="text-button" onClick={() => open(appointment)}>Edit</button>
             <button className="text-button danger" onClick={() => remove(appointment)}>Delete</button>
           </div>
