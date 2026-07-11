@@ -1065,3 +1065,269 @@ tbody tr { transition: background .14s ease, box-shadow .14s ease; }
   .appointment-profile-list > div { grid-template-columns: auto 1fr; }
   .appointment-profile-list strong { grid-column: 2; }
 }
+
+/* Horizon-inspired dashboard */
+.dashboard-page {
+  max-width: 1540px;
+  gap: 22px;
+  color: #1b2559;
+}
+.dashboard-page .dashboard-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 310px) auto;
+  align-items: center;
+  gap: 22px;
+  padding: 28px;
+  border: 0;
+  border-radius: 24px;
+  color: #1b2559;
+  background:
+    radial-gradient(circle at 86% 20%, rgba(67, 24, 255, .14), transparent 28%),
+    linear-gradient(135deg, #ffffff 0%, #f7f9ff 54%, #eef4ff 100%);
+  box-shadow: 0 18px 46px rgba(112, 144, 176, .18);
+}
+.dashboard-page .dashboard-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(67,24,255,.07), transparent 42%);
+  pointer-events: none;
+}
+.dashboard-page .dashboard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.dashboard-page .dashboard-hero .eyebrow {
+  color: #4318ff;
+  letter-spacing: .12em;
+}
+.dashboard-page .dashboard-hero h1 {
+  color: #1b2559;
+  font-size: clamp(34px, 4vw, 52px);
+  letter-spacing: 0;
+}
+.dashboard-page .dashboard-hero p:not(.eyebrow) {
+  max-width: 620px;
+  color: #707eae;
+  font-size: 15px;
+}
+.dashboard-spotlight-card {
+  min-height: 142px;
+  display: grid;
+  align-content: center;
+  gap: 9px;
+  padding: 20px;
+  border: 1px solid rgba(226,232,240,.9);
+  border-radius: 20px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 14px 34px rgba(112,144,176,.16);
+  backdrop-filter: blur(12px);
+}
+.dashboard-spotlight-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #707eae;
+  font-size: 12px;
+  font-weight: 800;
+}
+.dashboard-spotlight-card span svg {
+  color: #4318ff;
+}
+.dashboard-spotlight-card strong {
+  color: #1b2559;
+  font-family: "Manrope";
+  font-size: 30px;
+  letter-spacing: 0;
+}
+.dashboard-spotlight-card small {
+  color: #05cd99;
+  font-size: 12px;
+  font-weight: 800;
+}
+.dashboard-page .dashboard-hero-actions {
+  align-content: center;
+}
+.dashboard-page .dashboard-hero-actions .button {
+  border-radius: 16px;
+  min-height: 46px;
+  padding-inline: 18px;
+}
+.dashboard-page .dashboard-hero-actions .button.primary {
+  background: #4318ff;
+  box-shadow: 0 10px 24px rgba(67,24,255,.2);
+}
+.dashboard-page .dashboard-hero-actions .button.primary:hover {
+  background: #3311db;
+}
+.dashboard-page .dashboard-hero-actions .button.secondary {
+  color: #4318ff;
+  border: 0;
+  background: #f4f7fe;
+}
+.dashboard-page .dashboard-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.dashboard-page .dashboard-summary-strip span {
+  justify-content: center;
+  min-height: 54px;
+  padding: 14px 16px;
+  color: #1b2559;
+  border: 0;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 12px 30px rgba(112,144,176,.12);
+}
+.dashboard-page .dashboard-summary-strip svg {
+  color: #4318ff;
+}
+.dashboard-page .stats-grid {
+  gap: 18px;
+}
+.dashboard-page .stat-card {
+  min-height: 128px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 0;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 12px 30px rgba(112,144,176,.12);
+}
+.dashboard-page .stat-card::after {
+  display: none;
+}
+.dashboard-page .stat-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  border-radius: 999px;
+  color: #4318ff;
+  background: #f4f7fe;
+}
+.dashboard-page .stat-card.blue .stat-icon,
+.dashboard-page .stat-card.purple .stat-icon,
+.dashboard-page .stat-card.orange .stat-icon,
+.dashboard-page .stat-card.green .stat-icon {
+  color: #4318ff;
+  background: #f4f7fe;
+}
+.dashboard-page .stat-card span {
+  margin: 0 0 5px;
+  color: #a3aed0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.dashboard-page .stat-card strong {
+  color: #1b2559;
+  font-size: clamp(24px, 2.5vw, 34px);
+  letter-spacing: 0;
+}
+.dashboard-page .finance-grid {
+  gap: 18px;
+}
+.dashboard-page .finance-card {
+  min-height: 145px;
+  padding: 24px;
+  border: 0;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 12px 30px rgba(112,144,176,.12);
+}
+.dashboard-page .finance-card span {
+  color: #a3aed0;
+  font-weight: 800;
+}
+.dashboard-page .finance-card strong {
+  color: #1b2559;
+  letter-spacing: 0;
+}
+.dashboard-page .finance-card small {
+  color: #707eae;
+}
+.dashboard-page .finance-card.profit {
+  background: linear-gradient(135deg, #4318ff, #7551ff);
+}
+.dashboard-page .finance-card.profit span,
+.dashboard-page .finance-card.profit small {
+  color: rgba(255,255,255,.76);
+}
+.dashboard-page .finance-card.profit strong {
+  color: white;
+}
+.dashboard-page .finance-disclaimer {
+  border: 0;
+  border-radius: 16px;
+  color: #707eae;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(112,144,176,.1);
+}
+.dashboard-page .dashboard-columns {
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
+  gap: 20px;
+}
+.dashboard-page .panel {
+  border: 0;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 14px 34px rgba(112,144,176,.12);
+}
+.dashboard-page .panel-heading {
+  padding: 22px 24px 12px;
+  border-bottom: 0;
+}
+.dashboard-page .panel-heading h2 {
+  color: #1b2559;
+  letter-spacing: 0;
+}
+.dashboard-page .panel-heading p {
+  color: #a3aed0;
+}
+.dashboard-page th {
+  color: #a3aed0;
+  border-bottom: 1px solid #edf2f7;
+  background: white;
+}
+.dashboard-page td {
+  border-top: 1px solid #edf2f7;
+  color: #707eae;
+}
+.dashboard-page td strong {
+  color: #1b2559;
+}
+.dashboard-page tbody tr:hover {
+  background: #f8faff;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-page .dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-page .dashboard-hero-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-page {
+    gap: 16px;
+  }
+  .dashboard-page .dashboard-hero {
+    padding: 22px;
+    border-radius: 20px;
+  }
+  .dashboard-page .dashboard-summary-strip,
+  .dashboard-page .stats-grid,
+  .dashboard-page .finance-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-page .stat-card {
+    min-height: 112px;
+  }
+}

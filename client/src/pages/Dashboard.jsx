@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, CarFront, ClipboardList, FilePlus2, FileText, TrendingUp, UserPlus, UsersRound } from "lucide-react";
+import { CalendarDays, CarFront, ClipboardList, DollarSign, FilePlus2, FileText, TrendingUp, UserPlus, UsersRound } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
 
@@ -36,9 +36,14 @@ export default function Dashboard() {
       <section className="dashboard-hero">
         <div>
           <p className="eyebrow">Operations hub</p>
-          <h1>Dashboard</h1>
+          <h1>Welcome back, Yero</h1>
           <p>Track shop activity, current month performance and the latest service work from one place.</p>
         </div>
+        <article className="dashboard-spotlight-card">
+          <span><DollarSign size={16} /> Monthly sales</span>
+          <strong>{money.format(data?.currentMonth?.revenue || 0)}</strong>
+          <small>{monthOrders} completed orders</small>
+        </article>
         <div className="dashboard-hero-actions">
           <Link className="button primary" to="/work-orders"><FilePlus2 size={16} /> New work order</Link>
           <Link className="button secondary" to="/customers"><UserPlus size={16} /> Add customer</Link>
