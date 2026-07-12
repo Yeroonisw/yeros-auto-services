@@ -1331,3 +1331,490 @@ tbody tr { transition: background .14s ease, box-shadow .14s ease; }
     min-height: 112px;
   }
 }
+
+/* Full admin visual upgrade */
+:root {
+  --admin-bg: #f4f7fe;
+  --admin-ink: #1b2559;
+  --admin-muted: #707eae;
+  --admin-soft: #f8faff;
+  --admin-line: #e8eef8;
+  --admin-blue: #2b6fff;
+  --admin-violet: #4318ff;
+  --admin-green: #05a677;
+  --admin-red: #d62828;
+}
+
+body {
+  background: var(--admin-bg);
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 22% 0%, rgba(43,111,255,.08), transparent 28%),
+    linear-gradient(180deg, #f7faff 0%, #eef3fb 100%);
+}
+
+.sidebar {
+  border-right: 1px solid rgba(255,255,255,.08);
+  background:
+    radial-gradient(circle at 50% -12%, rgba(67,24,255,.28), transparent 30%),
+    linear-gradient(180deg, #0f172a 0%, #111827 58%, #172033 100%);
+  box-shadow: 24px 0 60px rgba(15,23,42,.18);
+}
+
+.sidebar .brand {
+  border-bottom-color: rgba(255,255,255,.1);
+}
+
+.sidebar-kicker {
+  color: #8ea0c4;
+}
+
+.nav-link {
+  min-height: 46px;
+  color: #b9c4d6;
+  border-radius: 12px;
+}
+
+.nav-link:hover {
+  color: #fff;
+  background: rgba(255,255,255,.075);
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--admin-violet), var(--admin-blue));
+  box-shadow: 0 13px 28px rgba(43,111,255,.28);
+}
+
+.nav-icon {
+  border-radius: 10px;
+  background: rgba(255,255,255,.08);
+}
+
+.nav-link.active .nav-icon {
+  background: rgba(255,255,255,.2);
+}
+
+.user-chip {
+  border-color: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.055);
+}
+
+.logout-button {
+  border-color: rgba(255,255,255,.11);
+  background: rgba(255,255,255,.04);
+}
+
+.main-content {
+  color: var(--admin-ink);
+}
+
+.app-header {
+  border-bottom: 0;
+  background: rgba(244,247,254,.82);
+  box-shadow: none;
+}
+
+.global-search {
+  height: 48px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--admin-muted);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(112,144,176,.12);
+}
+
+.global-search:focus-within {
+  box-shadow: 0 0 0 3px rgba(43,111,255,.12), 0 12px 28px rgba(112,144,176,.16);
+}
+
+.global-search > span {
+  border: 0;
+  border-radius: 999px;
+  color: #8f9bba;
+  background: #f4f7fe;
+}
+
+.page {
+  padding-top: 30px;
+}
+
+.main-content .page > .page-heading {
+  border: 0;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(214,40,40,.09), transparent 28%),
+    linear-gradient(135deg, #ffffff 0%, #f7faff 72%, #eef4ff 100%);
+  box-shadow: 0 16px 38px rgba(112,144,176,.13);
+}
+
+.main-content .page > .page-heading::after {
+  display: none;
+}
+
+.main-content .page > .page-heading h1,
+.detail-hero h1,
+.panel-heading h2 {
+  color: var(--admin-ink);
+  letter-spacing: 0;
+}
+
+.page-heading p:not(.eyebrow),
+.panel-heading p,
+.muted {
+  color: var(--admin-muted);
+}
+
+.eyebrow {
+  color: var(--admin-violet);
+  letter-spacing: .12em;
+}
+
+.button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 14px;
+}
+
+.button.primary {
+  background: linear-gradient(135deg, var(--admin-violet), var(--admin-blue));
+  box-shadow: 0 12px 24px rgba(43,111,255,.22);
+}
+
+.button.primary:hover {
+  background: linear-gradient(135deg, #3311db, #1f5be0);
+}
+
+.button.secondary {
+  color: var(--admin-violet);
+  background: #eef3ff;
+}
+
+.panel,
+.appointment-toolbar,
+.appointment-summary-grid article,
+.appointment-card,
+.detail-summary-grid article,
+.history-vehicle,
+.search-group,
+.oil-change-card,
+.work-order-editor-panel,
+.scanner-code-table article {
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(112,144,176,.12);
+}
+
+.panel-heading {
+  border-bottom: 0;
+  padding: 22px 24px 12px;
+}
+
+.table-wrap {
+  border-radius: 0 0 20px 20px;
+}
+
+th {
+  color: #a3aed0;
+  background: #fff;
+  border-bottom: 1px solid var(--admin-line);
+}
+
+td {
+  color: var(--admin-muted);
+  border-top: 1px solid #edf2f7;
+}
+
+td strong,
+.record-link {
+  color: var(--admin-ink);
+}
+
+tbody tr:hover {
+  background: #f8faff;
+}
+
+.actions .text-button,
+.appointment-actions .text-button {
+  border: 0;
+  color: var(--admin-violet);
+  background: #f4f7fe;
+}
+
+.actions .text-button.view-button,
+.appointment-actions .text-button.view-button {
+  color: var(--admin-green);
+  background: #ecfbf6;
+}
+
+.actions .text-button.danger,
+.appointment-actions .text-button.danger {
+  color: #c72c2c;
+  background: #fff1f1;
+}
+
+.status {
+  border-radius: 999px;
+  letter-spacing: .04em;
+}
+
+.status.pending,
+.status.oil-due_soon {
+  color: #a16207;
+  background: #fff7df;
+}
+
+.status.in_progress,
+.status.estimate-sent,
+.status.appointment-confirmed {
+  color: #2558c7;
+  background: #eaf1ff;
+}
+
+.status.completed,
+.status.estimate-approved,
+.status.oil-current,
+.status.appointment-completed {
+  color: #07815d;
+  background: #e7fbf4;
+}
+
+.status.cancelled,
+.status.active,
+.status.estimate-rejected,
+.status.oil-overdue,
+.status.appointment-cancelled,
+.status.appointment-no_show {
+  color: #b42318;
+  background: #fff0f0;
+}
+
+.modal-backdrop {
+  background: rgba(15,23,42,.62);
+  backdrop-filter: blur(8px);
+}
+
+.modal {
+  border: 0;
+  border-radius: 22px;
+  box-shadow: 0 30px 90px rgba(15,23,42,.32);
+}
+
+.modal > header {
+  border-bottom: 1px solid var(--admin-line);
+  background: #fff;
+}
+
+.modal-close,
+.icon-button {
+  border-radius: 12px;
+}
+
+input,
+select,
+textarea {
+  min-height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  color: var(--admin-ink);
+  background: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--admin-blue);
+  box-shadow: 0 0 0 3px rgba(43,111,255,.12);
+}
+
+.service-editor,
+.customer-search,
+.chat-messages,
+.raw-report-panel pre {
+  border: 0;
+  border-radius: 18px;
+  background: #f8faff;
+}
+
+.order-total {
+  border: 0;
+  border-radius: 18px;
+  color: var(--admin-ink);
+  background: #f4f7fe;
+}
+
+.profit-preview,
+.finance-disclaimer {
+  border: 0;
+  border-radius: 16px;
+  color: var(--admin-muted);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(112,144,176,.1);
+}
+
+.detail-topbar {
+  margin-bottom: 20px;
+}
+
+.back-link {
+  color: var(--admin-muted);
+}
+
+.detail-hero {
+  border-radius: 24px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 86% 16%, rgba(255,255,255,.13), transparent 26%),
+    linear-gradient(135deg, #1b2559, #243e8f 54%, #4318ff);
+  box-shadow: 0 18px 46px rgba(43,111,255,.22);
+}
+
+.detail-hero h1 {
+  color: #fff;
+}
+
+.detail-hero p:last-child {
+  color: rgba(255,255,255,.76);
+}
+
+.detail-summary-grid {
+  gap: 18px;
+}
+
+.detail-summary-grid article {
+  min-height: 140px;
+}
+
+.detail-summary-grid article > svg,
+.appointment-toolbar svg,
+.appointment-summary-grid svg,
+.appointment-profile-list svg,
+.scanner-file-panel svg {
+  color: var(--admin-violet);
+}
+
+.detail-summary-grid article span,
+.appointment-summary-grid span,
+.appointment-profile-list span {
+  color: #a3aed0;
+}
+
+.detail-summary-grid article strong,
+.appointment-summary-grid strong,
+.appointment-profile-list strong,
+.appointment-date strong,
+.appointment-title-link,
+.appointment-title-row h3 {
+  color: var(--admin-ink);
+}
+
+.detail-totals .grand-total {
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--admin-violet), var(--admin-blue));
+}
+
+.appointment-card {
+  border-left: 0;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
+}
+
+.appointment-date {
+  border-radius: 18px;
+  background: #f4f7fe;
+}
+
+.appointment-meta span,
+.appointment-meta a {
+  border: 0;
+  color: var(--admin-muted);
+  background: #f4f7fe;
+}
+
+.appointment-title-link:hover,
+.record-link:hover {
+  color: var(--admin-violet);
+}
+
+.appointment-toolbar select {
+  border-radius: 14px;
+}
+
+.finance-card {
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(112,144,176,.12);
+}
+
+.finance-card.cost {
+  background: #fff;
+}
+
+.finance-card.profit {
+  border: 0;
+  background: linear-gradient(135deg, #0f9f7a, #05cd99);
+}
+
+.finance-card.profit span,
+.finance-card.profit small,
+.finance-card.profit strong {
+  color: #fff;
+}
+
+.finance-breakdown > div {
+  color: var(--admin-muted);
+}
+
+.finance-breakdown .profit-row {
+  color: var(--admin-green);
+}
+
+.chat-panel,
+.manual-frame-wrap {
+  border-radius: 22px;
+}
+
+.chat-message.assistant {
+  border: 0;
+  box-shadow: 0 8px 20px rgba(112,144,176,.1);
+}
+
+.chat-message.user {
+  background: linear-gradient(135deg, var(--admin-violet), var(--admin-blue));
+}
+
+.alert {
+  border: 0;
+  border-radius: 16px;
+  color: #a12626;
+  background: #fff0f0;
+  box-shadow: 0 10px 24px rgba(177,38,38,.08);
+}
+
+.state-card {
+  color: var(--admin-muted);
+}
+
+@media (max-width: 760px) {
+  .global-search {
+    border-radius: 16px;
+  }
+
+  .panel,
+  .appointment-card,
+  .main-content .page > .page-heading,
+  .detail-hero {
+    border-radius: 18px;
+  }
+
+  .appointment-card {
+    grid-template-columns: 1fr;
+  }
+}
