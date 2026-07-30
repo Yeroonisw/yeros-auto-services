@@ -11,6 +11,23 @@ const vehicleSchema = new mongoose.Schema(
     plate: { type: String, trim: true, uppercase: true },
     color: { type: String, trim: true },
     mileage: { type: Number, min: 0, default: 0 },
+    mileageHistory: {
+      type: [{
+        mileage: { type: Number, min: 0, required: true },
+        recordedAt: { type: Date, default: Date.now },
+        source: { type: String, trim: true, default: "manual" },
+      }],
+      default: [],
+    },
+    attachments: {
+      type: [{
+        name: { type: String, required: true, trim: true },
+        kind: { type: String, enum: ["photo", "receipt", "scanner_report", "document"], default: "document" },
+        url: { type: String, required: true, trim: true },
+        uploadedAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
     oilChange: {
       lastDate: Date,
       lastMileage: { type: Number, min: 0, default: 0 },
@@ -71,4 +88,7 @@ vehicleSchema.virtual("oilChangeStatus").get(function oilChangeStatus() {
   };
 });
 
+vehicleSchema.index({ customer: 1, createdAt: -1 });
+vehicleSchema.index({ vin: 1 }, { sparse: true });
+vehicleSchema.index({ plate: 1 }, { sparse: true });
 export default mongoose.model("Vehicle", vehicleSchema);

@@ -14,10 +14,18 @@ const appointmentSchema = new mongoose.Schema(
     scheduledAt: { type: Date, required: true },
     durationMinutes: { type: Number, min: 15, default: 60 },
     location: { type: String, trim: true },
+    mechanic: { type: String, trim: true, default: "Yero" },
+    mechanicStatus: {
+      type: String,
+      enum: ["available", "traveling", "working", "break", "off"],
+      default: "available",
+    },
     priority: { type: String, enum: ["normal", "urgent"], default: "normal" },
     notes: { type: String, trim: true },
   },
   { timestamps: true },
 );
 
+appointmentSchema.index({ scheduledAt: 1, status: 1 });
+appointmentSchema.index({ mechanic: 1, scheduledAt: 1 });
 export default mongoose.model("Appointment", appointmentSchema);

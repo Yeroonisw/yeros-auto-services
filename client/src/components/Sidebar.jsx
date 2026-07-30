@@ -14,24 +14,31 @@ import {
   UserRound,
   Wrench,
   LayoutGrid,
+  BellRing,
+  CalendarRange,
+  PackageSearch,
+  ShieldCheck,
 } from "lucide-react";
 
 const groups = [
   {
     label: "Overview",
     links: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutGrid, permission: "dashboard" },
+      { to: "/calendar", label: "Calendar", icon: CalendarRange, permission: "appointments" },
+      { to: "/reminders", label: "Reminders", icon: BellRing, permission: "reminders" },
       { to: "/search", label: "Deep search", icon: Search },
     ],
   },
   {
     label: "Operations",
     links: [
-      { to: "/appointments", label: "Appointments", icon: CalendarClock },
-      { to: "/customers", label: "Customers", icon: UserRound },
-      { to: "/vehicles", label: "Vehicles", icon: CarFront },
-      { to: "/estimates", label: "Estimates", icon: FileText },
-      { to: "/work-orders", label: "Work orders", icon: ClipboardList },
+      { to: "/appointments", label: "Appointments", icon: CalendarClock, permission: "appointments" },
+      { to: "/customers", label: "Customers", icon: UserRound, permission: "customers" },
+      { to: "/vehicles", label: "Vehicles", icon: CarFront, permission: "vehicles" },
+      { to: "/estimates", label: "Estimates", icon: FileText, permission: "estimates" },
+      { to: "/work-orders", label: "Work orders", icon: ClipboardList, permission: "work_orders" },
+      { to: "/inventory", label: "Parts inventory", icon: PackageSearch, permission: "inventory" },
     ],
   },
   {
@@ -42,6 +49,12 @@ const groups = [
       { to: "/autel-live", label: "Autel live", icon: MonitorSmartphone },
       { to: "/assistant", label: "AI diagnostics", icon: Bot },
       { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
+    ],
+  },
+  {
+    label: "Administration",
+    links: [
+      { to: "/security", label: "Security & audit", icon: ShieldCheck, adminOnly: true },
     ],
   },
 ];
@@ -64,7 +77,7 @@ export default function Sidebar({ open, onClose }) {
       <nav className="sidebar-nav-groups">
         {groups.map((group) => <section className="sidebar-nav-group" key={group.label}>
           <div className="sidebar-kicker">{group.label}</div>
-          {group.links.map((link) => {
+          {group.links.filter((link) => (!link.adminOnly || user?.role === "admin") && (user?.role === "admin" || !link.permission || user?.permissions?.includes(link.permission))).map((link) => {
             const Icon = link.icon;
             return <NavLink key={link.to} to={link.to} onClick={onClose} className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
               <span className="nav-icon"><Icon size={17} strokeWidth={1.9} /></span>

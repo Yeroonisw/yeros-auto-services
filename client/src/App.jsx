@@ -1,27 +1,32 @@
-import { Component } from "react";
+import { Component, lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 import Login from "./pages/Login.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import Customers from "./pages/Customers.jsx";
-import Vehicles from "./pages/Vehicles.jsx";
-import WorkOrders from "./pages/WorkOrders.jsx";
-import Estimates from "./pages/Estimates.jsx";
-import Appointments from "./pages/Appointments.jsx";
-import AppointmentDetail from "./pages/AppointmentDetail.jsx";
-import Assistant from "./pages/Assistant.jsx";
-import Manuals from "./pages/Manuals.jsx";
-import WorkOrderDetail from "./pages/WorkOrderDetail.jsx";
-import SearchResults from "./pages/SearchResults.jsx";
-import CustomerDetail from "./pages/CustomerDetail.jsx";
-import VehicleDetail from "./pages/VehicleDetail.jsx";
 import Home from "./pages/Home.jsx";
-import ScannerReports from "./pages/ScannerReports.jsx";
-import ScannerReportDetail from "./pages/ScannerReportDetail.jsx";
-import AutelImport from "./pages/AutelImport.jsx";
-import AutelLive from "./pages/AutelLive.jsx";
 import { business } from "./config/business.js";
+
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const Customers = lazy(() => import("./pages/Customers.jsx"));
+const Vehicles = lazy(() => import("./pages/Vehicles.jsx"));
+const WorkOrders = lazy(() => import("./pages/WorkOrders.jsx"));
+const Estimates = lazy(() => import("./pages/Estimates.jsx"));
+const Appointments = lazy(() => import("./pages/Appointments.jsx"));
+const AppointmentDetail = lazy(() => import("./pages/AppointmentDetail.jsx"));
+const Assistant = lazy(() => import("./pages/Assistant.jsx"));
+const Manuals = lazy(() => import("./pages/Manuals.jsx"));
+const WorkOrderDetail = lazy(() => import("./pages/WorkOrderDetail.jsx"));
+const SearchResults = lazy(() => import("./pages/SearchResults.jsx"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail.jsx"));
+const VehicleDetail = lazy(() => import("./pages/VehicleDetail.jsx"));
+const ScannerReports = lazy(() => import("./pages/ScannerReports.jsx"));
+const ScannerReportDetail = lazy(() => import("./pages/ScannerReportDetail.jsx"));
+const AutelImport = lazy(() => import("./pages/AutelImport.jsx"));
+const AutelLive = lazy(() => import("./pages/AutelLive.jsx"));
+const Inventory = lazy(() => import("./pages/Inventory.jsx"));
+const Reminders = lazy(() => import("./pages/Reminders.jsx"));
+const Security = lazy(() => import("./pages/Security.jsx"));
+const CalendarPro = lazy(() => import("./pages/CalendarPro.jsx"));
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -62,7 +67,7 @@ function ProtectedRoute() {
 export default function App() {
   return (
     <AppErrorBoundary>
-    <Routes>
+    <Suspense fallback={<div className="route-loading"><span /><p>Loading workspace...</p></div>}><Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route element={<ProtectedRoute />}>
@@ -81,13 +86,17 @@ export default function App() {
           <Route path="/estimates" element={<Estimates />} />
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/appointments/:id" element={<AppointmentDetail />} />
+          <Route path="/calendar" element={<CalendarPro />} />
+          <Route path="/reminders" element={<Reminders />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/security" element={<Security />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />
           <Route path="/search" element={<SearchResults />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    </Routes></Suspense>
     </AppErrorBoundary>
   );
 }

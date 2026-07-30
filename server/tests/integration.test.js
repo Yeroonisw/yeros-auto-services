@@ -419,6 +419,76 @@ test("dashboard reflects stored records", async () => {
   assert.equal(response.body.grossProfit, 55);
   assert.equal(response.body.currentMonth.grossProfit, 55);
   assert.equal(response.body.monthly[0].revenue, 75);
+  assert.equal(response.body.sales.month.revenue, 75);
+  assert.ok(response.body.appointmentStatus);
+  assert.ok(response.body.customerSegments);
+});
+
+test("inventory tracks stock, margins and parts used by an order", async () => {
+  const created = await request(app)
+    .post("/api/inventory")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ sku: "PAD-001", name: "Front brake pads", supplier: "Test Parts", quantity: 4, minimumStock: 2, cost: 35, salePrice: 75 })
+    .expect(201);
+  assert.equal(created.body.unitProfit, 40);
+
+  const used = await request(app)
+    .post(`/api/inventory/${created.body._id}/use`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({ workOrder: order._id, quantity: 1 })
+    .expect(200);
+  assert.equal(used.body.part.quantity, 3);
+  assert.equal(used.body.order.partsUsed[0].name, "Front brake pads");
+
+  const list = await request(app)
+    .get("/api/inventory?page=1&limit=10")
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(list.body.items.length, 1);
+  assert.equal(list.body.pagination.total, 1);
+  assert.equal(list.body.summary.units, 3);
+});
+
+test("customer interactions and reminder queue are persistent", async () => {
+  const interaction = await request(app)
+    .post(`/api/customers/${customer._id}/interactions`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({ type: "whatsapp", direction: "outbound", note: "Sent maintenance follow-up" })
+    .expect(201);
+  assert.equal(interaction.body.type, "whatsapp");
+
+  await request(app)
+    .post("/api/reminders")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ type: "custom", customer: customer._id, title: "Call customer", message: "Check repair satisfaction", dueAt: new Date() })
+    .expect(201);
+  const reminders = await request(app)
+    .get("/api/reminders")
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.ok(reminders.body.items.some((item) => item.title === "Call customer"));
+
+  const detail = await request(app)
+    .get(`/api/customers/${customer._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(detail.body.interactions[0].note, "Sent maintenance follow-up");
+  assert.equal(detail.body.insights.visits, 1);
+  assert.equal(detail.body.insights.totalSpent, 82.5);
+});
+
+test("security center exposes users, audit and safe backups", async () => {
+  const users = await request(app).get("/api/security/users").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.equal(users.body.length, 1);
+  assert.equal(users.body[0].password, undefined);
+
+  const audit = await request(app).get("/api/security/audit").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.ok(audit.body.items.length > 0);
+
+  const backup = await request(app).get("/api/security/backup").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.equal(backup.body.business, "Yeros Auto Services LLC");
+  assert.equal(backup.body.data.customers.length, 1);
+  assert.equal(backup.body.data.users, undefined);
 });
 
 test("records can be deleted in dependency order", async () => {

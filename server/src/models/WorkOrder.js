@@ -30,6 +30,17 @@ const workOrderSchema = new mongoose.Schema(
       default: "pending",
     },
     services: { type: [serviceSchema], default: [] },
+    partsUsed: {
+      type: [{
+        part: { type: mongoose.Schema.Types.ObjectId, ref: "Part", required: true },
+        name: { type: String, required: true, trim: true },
+        sku: { type: String, trim: true },
+        quantity: { type: Number, min: 0.01, default: 1 },
+        cost: { type: Number, min: 0, default: 0 },
+        salePrice: { type: Number, min: 0, default: 0 },
+      }],
+      default: [],
+    },
     dtcCodes: { type: [dtcSchema], default: [] },
     labor: { type: Number, min: 0, default: 0 },
     taxRate: { type: Number, min: 0, max: 100, default: 0 },
@@ -86,4 +97,8 @@ workOrderSchema.pre("validate", async function assignOrderNumber(next) {
   next();
 });
 
+workOrderSchema.index({ status: 1, openedAt: 1 });
+workOrderSchema.index({ customer: 1, completedAt: -1 });
+workOrderSchema.index({ vehicle: 1, completedAt: -1 });
+workOrderSchema.index({ completedAt: -1 });
 export default mongoose.model("WorkOrder", workOrderSchema);
