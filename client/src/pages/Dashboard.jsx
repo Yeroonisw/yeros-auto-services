@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, CarFront, ClipboardList, DollarSign, FilePlus2, FileText, TrendingUp, UserPlus, UsersRound } from "lucide-react";
+import { AlertCircle, BellRing, CalendarDays, CarFront, ChevronRight, ClipboardList, DollarSign, FilePlus2, FileText, Gauge, TrendingDown, TrendingUp, UserPlus, UsersRound, Wrench } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
 
@@ -11,6 +11,13 @@ const statusLabel = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
+
+function Change({ value }) {
+  const number = Number(value || 0);
+  const positive = number >= 0;
+  const Icon = positive ? TrendingUp : TrendingDown;
+  return <small className={positive ? "metric-change positive" : "metric-change negative"}><Icon />{Math.abs(number).toFixed(1)}% vs last month</small>;
+}
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -30,6 +37,7 @@ export default function Dashboard() {
   ];
   const activeOrders = data?.activeOrders || 0;
   const monthOrders = data?.currentMonth?.orders || 0;
+  const maxMonthlyRevenue = Math.max(...(data?.monthly || []).map((month) => month.revenue), 1);
 
   return (
     <div className="page dashboard-page">
@@ -54,9 +62,9 @@ export default function Dashboard() {
       <Alert message={error} onClose={() => setError("")} />
 
       <section className="dashboard-summary-strip">
-        <span><CalendarDays size={15} /> {monthOrders} completed this month</span>
+        <span><CalendarDays size={15} /> {data?.todayAppointments || 0} appointments today</span>
         <span><ClipboardList size={15} /> {activeOrders} active orders</span>
-        <span><TrendingUp size={15} /> {money.format(data?.currentMonth?.revenue || 0)} monthly sales</span>
+        <span><BellRing size={15} /> {data?.reminders?.total || 0} follow-ups need attention</span>
       </section>
 
       <section className="stats-grid">
@@ -74,7 +82,7 @@ export default function Dashboard() {
         <article className="finance-card">
           <span>Sales this month</span>
           <strong>{money.format(data?.currentMonth?.revenue || 0)}</strong>
-          <small>Charges before tax</small>
+          <Change value={data?.comparison?.revenue} />
         </article>
         <article className="finance-card cost">
           <span>Parts cost this month</span>
@@ -84,10 +92,52 @@ export default function Dashboard() {
         <article className="finance-card profit">
           <span>Gross profit this month</span>
           <strong>{money.format(data?.currentMonth?.grossProfit || 0)}</strong>
-          <small>Sales minus parts cost</small>
+          <Change value={data?.comparison?.grossProfit} />
         </article>
       </section>
       <div className="finance-disclaimer">Gross profit is not net profit. It does not subtract payroll, rent, utilities, tools, insurance, card fees or other business expenses. Sales tax is excluded.</div>
+
+      <section className="insights-grid">
+        <section className="panel revenue-trend-panel">
+          <div className="panel-heading"><div><h2>Revenue trend</h2><p>Sales performance over the last six active months.</p></div><Gauge /></div>
+          <div className="revenue-bars">{(data?.monthly || []).slice(0, 6).reverse().map((month) => <div key={month.month}>
+            <div className="bar-track"><span style={{ height: `${Math.max(8, (month.revenue / maxMonthlyRevenue) * 100)}%` }} /></div>
+            <strong>{money.format(month.revenue)}</strong>
+            <small>{new Date(month.month + "-02").toLocaleDateString("en-US", { month: "short" })}</small>
+          </div>)}</div>
+        </section>
+
+        <section className="panel top-services-panel">
+          <div className="panel-heading"><div><h2>Top services</h2><p>Highest revenue service lines.</p></div><Wrench /></div>
+          <div className="top-service-list">{data?.topServices?.length ? data.topServices.map((service, index) => <article key={service.name}>
+            <span>{index + 1}</span><div><strong>{service.name}</strong><small>{service.jobs} jobs</small></div><b>{money.format(service.revenue)}</b>
+          </article>) : <div className="state-card compact">Complete work orders to see top services.</div>}</div>
+        </section>
+      </section>
+
+      <section className="operations-grid">
+        <section className="panel agenda-panel">
+          <div className="panel-heading"><div><h2>Next appointments</h2><p>Your upcoming mobile service schedule.</p></div><Link to="/appointments">Open calendar <ChevronRight /></Link></div>
+          <div className="dashboard-agenda">{data?.upcomingAppointments?.length ? data.upcomingAppointments.map((appointment) => <article key={appointment._id}>
+            <div className="agenda-date"><strong>{new Date(appointment.scheduledAt).toLocaleDateString("en-US", { day: "2-digit" })}</strong><span>{new Date(appointment.scheduledAt).toLocaleDateString("en-US", { month: "short" })}</span></div>
+            <div><strong>{appointment.title}</strong><span>{appointment.customer?.name} · {new Date(appointment.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>{appointment.location && <small>{appointment.location}</small>}</div>
+            <span className={`status appointment-${appointment.status}`}>{appointment.status.replace("_", " ")}</span>
+          </article>) : <div className="state-card compact">No appointments in the next seven days.</div>}</div>
+        </section>
+
+        <section className="panel reminder-panel">
+          <div className="panel-heading"><div><h2>Follow-up center</h2><p>Maintenance and estimate reminders.</p></div><BellRing /></div>
+          <div className="reminder-list">
+            {(data?.reminders?.oilChanges || []).slice(0, 4).map((item) => <Link to={`/vehicles/${item._id}`} key={item._id} className="reminder-item">
+              <span className={`reminder-icon ${item.status}`}><AlertCircle /></span><div><strong>{item.vehicle}</strong><small>{item.customer?.name} · Oil change {item.status === "overdue" ? "overdue" : "due soon"}</small></div><ChevronRight />
+            </Link>)}
+            {(data?.reminders?.estimates || []).slice(0, 4).map((item) => <Link to="/estimates" key={item._id} className="reminder-item">
+              <span className="reminder-icon estimate"><FileText /></span><div><strong>{item.estimateNumber} · {money.format(item.total || 0)}</strong><small>{item.customer?.name} · Open {item.ageDays} days</small></div><ChevronRight />
+            </Link>)}
+            {!data?.reminders?.total && <div className="state-card compact">Everything is up to date. No follow-ups needed.</div>}
+          </div>
+        </section>
+      </section>
 
       <section className="dashboard-columns">
         <section className="panel monthly-panel">

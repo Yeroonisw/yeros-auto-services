@@ -602,6 +602,38 @@ textarea { resize: vertical; }
   .public-footer > p { text-align: center; }
 }
 
+/* Business insights dashboard */
+.insights-grid { display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:18px; }
+.operations-grid { display:grid;grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);gap:18px; }
+.insights-grid .panel-heading,.operations-grid .panel-heading { align-items:center; }
+.insights-grid .panel-heading > svg,.operations-grid .panel-heading > svg { width:38px;height:38px;padding:10px;color:#ef3028;border-radius:10px;background:#fff0ef; }
+.insights-grid .panel-heading a,.operations-grid .panel-heading a { display:inline-flex;align-items:center;gap:4px;color:#dc2b25;font-size:9px;font-weight:900;text-decoration:none; }
+.insights-grid .panel-heading a svg,.operations-grid .panel-heading a svg { width:13px; }
+.metric-change { display:flex!important;align-items:center;gap:4px;margin-top:5px!important;font-size:9px!important;font-weight:900; }
+.metric-change svg { width:13px;height:13px; }.metric-change.positive { color:#08a071!important; }.metric-change.negative { color:#d13b35!important; }
+.finance-card.profit .metric-change { color:rgba(255,255,255,.85)!important; }
+.revenue-bars { min-height:265px;display:grid;grid-template-columns:repeat(6,1fr);align-items:end;gap:12px;padding:22px 24px 25px; }
+.revenue-bars > div { min-width:0;display:grid;grid-template-rows:170px auto auto;gap:7px;justify-items:center; }
+.bar-track { width:38px;height:170px;display:flex;align-items:flex-end;overflow:hidden;border-radius:8px;background:#f0f3f8; }
+.bar-track span { width:100%;display:block;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#ef3028,#ff786e);box-shadow:0 8px 18px rgba(239,48,40,.2); }
+.revenue-bars strong { max-width:100%;overflow:hidden;color:#263247;font-size:9px;text-overflow:ellipsis;white-space:nowrap; }.revenue-bars small { color:#97a0ae;font-size:8px;font-weight:900;text-transform:uppercase; }
+.top-service-list { display:grid;padding:5px 20px 20px; }
+.top-service-list article { display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #edf0f4; }
+.top-service-list article:last-child { border-bottom:0; }.top-service-list article > span { width:28px;height:28px;display:grid;place-items:center;color:#dc2b25;border-radius:8px;background:#fff0ef;font-size:10px;font-weight:900; }
+.top-service-list strong,.top-service-list small { display:block; }.top-service-list strong { color:#263247;font-size:11px; }.top-service-list small { margin-top:3px;color:#9aa3b1;font-size:8px; }.top-service-list b { color:#1d2939;font-size:10px; }
+.dashboard-agenda { display:grid;padding:5px 20px 20px; }
+.dashboard-agenda article { display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f4; }.dashboard-agenda article:last-child { border-bottom:0; }
+.agenda-date { width:46px;height:49px;display:grid;place-content:center;justify-items:center;border-radius:10px;color:white;background:#172033; }.agenda-date strong { font-family:"Manrope";font-size:17px;line-height:1; }.agenda-date span { margin-top:3px;font-size:7px;font-weight:900;text-transform:uppercase; }
+.dashboard-agenda article > div:nth-child(2) strong,.dashboard-agenda article > div:nth-child(2) span,.dashboard-agenda article > div:nth-child(2) small { display:block; }.dashboard-agenda article > div:nth-child(2) strong { color:#263247;font-size:11px; }.dashboard-agenda article > div:nth-child(2) span { margin-top:4px;color:#768194;font-size:9px; }.dashboard-agenda article > div:nth-child(2) small { margin-top:3px;color:#9ba4b2;font-size:8px; }
+.reminder-list { display:grid;padding:5px 18px 20px; }
+.reminder-item { display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:12px 0;color:inherit;border-bottom:1px solid #edf0f4;text-decoration:none; }.reminder-item:last-child { border-bottom:0; }.reminder-item > svg { width:15px;color:#a6aebb; }
+.reminder-icon { width:36px;height:36px;display:grid;place-items:center;border-radius:10px;color:#b7791f;background:#fff7df; }.reminder-icon.overdue { color:#c72c2c;background:#fff0f0; }.reminder-icon.estimate { color:#3564c7;background:#eef3ff; }.reminder-icon svg { width:16px; }
+.reminder-item strong,.reminder-item small { display:block; }.reminder-item strong { color:#263247;font-size:10px; }.reminder-item small { margin-top:4px;color:#8e98a7;font-size:8px; }
+@media (max-width:1100px) { .insights-grid,.operations-grid { grid-template-columns:1fr; } }
+@media (max-width:600px) {
+  .revenue-bars { gap:6px;padding-inline:12px; }.bar-track { width:26px; }.dashboard-agenda article { grid-template-columns:44px 1fr; }.dashboard-agenda article > .status { grid-column:2;width:fit-content; }
+}
+
 /* Admin workspace 2026 */
 .admin-v2 { --sidebar-width: 268px; --admin-accent: #ef3028; --admin-navy: #0b111b; }
 .admin-v2 .sidebar { width: var(--sidebar-width); padding: 18px 14px; background:
