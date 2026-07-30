@@ -4,6 +4,7 @@ import {
   ArrowUpRight, BellRing, CalendarDays, CarFront, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardList, Clock3, FilePlus2, FileText, Plus, Sparkles,
   TrendingDown, TrendingUp, UserPlus, UsersRound, Wrench,
+  AlertTriangle, BarChart3, CalendarCheck2, PackageSearch, RefreshCw, UserCheck,
 } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -21,15 +22,25 @@ function Delta({ value, inverse = false }) {
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    api.get("/dashboard").then(({ data: response }) => setData(response)).catch((requestError) => setError(errorMessage(requestError)));
-  }, []);
+  async function load(refresh = false) {
+    setRefreshing(true);
+    try {
+      const { data: response } = await api.get("/dashboard", { params: refresh ? { refresh: true } : {} });
+      setData(response);
+    } catch (requestError) {
+      setError(errorMessage(requestError));
+    } finally {
+      setRefreshing(false);
+    }
+  }
+  useEffect(() => { load(); }, []);
 
   const chart = useMemo(() => {
     const months = (data?.monthly || []).slice(0, 6).reverse();
     const max = Math.max(...months.map((month) => month.revenue), 1);
-    return months.map((month) => ({ ...month, height: Math.max(7, (month.revenue / max) * 100) }));
+    return months.map((month) => ({ ...month, height: Math.max(7, (month.revenue / max) * 100), expenseHeight: Math.max(4, ((month.expenses || month.partsCost || 0) / max) * 100) }));
   }, [data]);
 
   if (!data && !error) return <div className="page"><Loading /></div>;
@@ -51,6 +62,7 @@ export default function Dashboard() {
         <Link to="/work-orders"><FilePlus2 />New work order</Link>
         <Link to="/appointments"><CalendarDays />Book service</Link>
         <Link to="/customers"><UserPlus />Add customer</Link>
+        <button onClick={() => load(true)} disabled={refreshing}><RefreshCw className={refreshing ? "spin" : ""} />Refresh</button>
       </div>
       <aside className="daily-pulse">
         <header><span>Daily pulse</span><Sparkles /></header>
@@ -68,15 +80,21 @@ export default function Dashboard() {
           <article><span className="metric-symbol dark"><CircleDollarSign /></span><div><small>Gross profit</small><strong>{money.format(current.grossProfit || 0)}</strong></div><Delta value={data?.comparison?.grossProfit} /></article>
         </section>
 
+        <section className="period-performance">
+          {Object.entries(data?.sales || {}).map(([period, values]) => <article key={period}>
+            <span>{period}</span><strong>{money.format(values.revenue || 0)}</strong><small>{values.orders || 0} jobs · {money.format(values.profit || 0)} profit</small>
+          </article>)}
+        </section>
+
         <section className="command-workbench">
           <article className="command-card revenue-story">
             <header><div><span>Performance</span><h2>Revenue rhythm</h2></div><div className="revenue-total"><small>Current month</small><strong>{money.format(current.revenue || 0)}</strong></div></header>
             <div className="story-chart">{chart.length ? chart.map((month) => <div key={month.month}>
               <span className="story-value">{money.format(month.revenue)}</span>
-              <div><i style={{ height: `${month.height}%` }} /></div>
+              <div><i className="revenue-bar" style={{ height: `${month.height}%` }} /><i className="expense-bar" style={{ height: `${month.expenseHeight}%` }} /></div>
               <small>{new Date(month.month + "-02").toLocaleDateString("en-US", { month: "short" })}</small>
             </div>) : <div className="command-empty">Complete a work order to start the chart.</div>}</div>
-            <footer><span><i className="revenue-dot" /> Revenue</span><span>{current.orders || 0} completed jobs this month</span></footer>
+            <footer><span><i className="revenue-dot" /> Revenue</span><span><i className="expense-dot" /> Parts & expenses</span><span>{current.orders || 0} completed jobs this month</span></footer>
           </article>
 
           <article className="command-card next-stop">
@@ -87,6 +105,17 @@ export default function Dashboard() {
               <div><strong>{appointment.title}</strong><small>{appointment.customer?.name}{appointment.location ? ` · ${appointment.location}` : ""}</small></div>
               <ChevronRight />
             </Link>) : <div className="command-empty">No appointments in the next seven days.</div>}</div>
+          </article>
+        </section>
+
+        <section className="business-insight-grid">
+          <article className="command-card pipeline-card">
+            <header><div><span>Appointment flow</span><h2>This month</h2></div><CalendarCheck2 /></header>
+            <div>{[["scheduled", "Pending"], ["confirmed", "Confirmed"], ["completed", "Completed"], ["cancelled", "Cancelled"]].map(([key, label]) => <div key={key}><span>{label}</span><strong>{data?.appointmentStatus?.[key] || 0}</strong><i style={{ width: `${Math.min(100, (data?.appointmentStatus?.[key] || 0) * 12)}%` }} /></div>)}</div>
+          </article>
+          <article className="command-card customer-mix">
+            <header><div><span>Customer health</span><h2>New vs. recurring</h2></div><UserCheck /></header>
+            <div><article><strong>{data?.customerSegments?.new || 0}</strong><span>New this month</span></article><article><strong>{data?.customerSegments?.recurring || 0}</strong><span>Recurring</span></article><article><strong>{data?.customerSegments?.oneTime || 0}</strong><span>One-time</span></article></div>
           </article>
         </section>
 
@@ -112,6 +141,12 @@ export default function Dashboard() {
           {reminders.estimates?.slice(0, 3).map((item) => <Link to="/estimates" key={item._id}>
             <span className="priority-icon estimate"><FileText /></span><div><strong>{item.estimateNumber}</strong><small>{item.customer?.name} · Open {item.ageDays} days</small></div><ChevronRight />
           </Link>)}
+          {data?.overdueOrders?.slice(0, 3).map((item) => <Link to={`/work-orders/${item._id}`} key={item._id}>
+            <span className="priority-icon overdue"><AlertTriangle /></span><div><strong>{item.orderNumber}</strong><small>{item.customer?.name} · Order overdue</small></div><ChevronRight />
+          </Link>)}
+          {data?.lowStock?.slice(0, 2).map((item) => <Link to="/inventory" key={item._id}>
+            <span className="priority-icon estimate"><PackageSearch /></span><div><strong>{item.name}</strong><small>{item.quantity} left · reorder at {item.minimumStock}</small></div><ChevronRight />
+          </Link>)}
           {!reminders.total && <div className="all-clear"><CheckCircle2 /><strong>All clear</strong><span>No follow-ups need attention.</span></div>}</div>
         </section>
 
@@ -126,7 +161,7 @@ export default function Dashboard() {
         <section className="command-card service-leaders">
           <header><div><span>Best performers</span><h2>Top services</h2></div></header>
           <div>{data?.topServices?.length ? data.topServices.slice(0, 5).map((service, index) => <article key={service.name}>
-            <span>{String(index + 1).padStart(2, "0")}</span><div><strong>{service.name}</strong><small>{service.jobs} jobs</small></div><b>{money.format(service.revenue)}</b>
+            <span>{String(index + 1).padStart(2, "0")}</span><div><strong>{service.name}</strong><small>{service.jobs} jobs · {money.format(service.profit || 0)} profit</small></div><b>{money.format(service.revenue)}</b>
           </article>) : <div className="command-empty">No service data yet.</div>}</div>
         </section>
 

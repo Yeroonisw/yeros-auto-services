@@ -22,6 +22,8 @@ const blank = {
   status: "scheduled",
   scheduledAt: "",
   durationMinutes: 60,
+  mechanic: "Yero",
+  mechanicStatus: "available",
   location: "",
   priority: "normal",
   notes: "",
@@ -90,6 +92,8 @@ export default function Appointments() {
         status: appointment.status || "scheduled",
         scheduledAt: dateTimeInputValue(appointment.scheduledAt),
         durationMinutes: appointment.durationMinutes || 60,
+        mechanic: appointment.mechanic || "Yero",
+        mechanicStatus: appointment.mechanicStatus || "available",
         location: appointment.location || "",
         priority: appointment.priority || "normal",
         notes: appointment.notes || "",
@@ -194,6 +198,7 @@ export default function Appointments() {
             <p>{appointment.customer?.name || "Customer not set"}{appointment.vehicle ? ` - ${appointment.vehicle.year} ${appointment.vehicle.make} ${appointment.vehicle.model}` : ""}</p>
             <div className="appointment-meta">
               <span><Clock3 size={14} /> {appointment.durationMinutes || 60} min</span>
+              <span><PlayCircle size={14} /> {appointment.mechanic || "Yero"} · {(appointment.mechanicStatus || "available").replace("_", " ")}</span>
               {appointment.location && <span><MapPin size={14} /> {appointment.location}</span>}
               {appointment.customer?.phone && <a href={"tel:" + appointment.customer.phone}><Phone size={14} /> {appointment.customer.phone}</a>}
             </div>
@@ -221,6 +226,8 @@ export default function Appointments() {
         <label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label>Scheduled date/time<input type="datetime-local" value={form.scheduledAt} onChange={(event) => setForm({ ...form, scheduledAt: event.target.value })} required /></label>
         <label>Duration minutes<input type="number" min="15" step="15" value={form.durationMinutes} onChange={(event) => setForm({ ...form, durationMinutes: Number(event.target.value) })} /></label>
+        <label>Mechanic<input value={form.mechanic} onChange={(event) => setForm({ ...form, mechanic: event.target.value })} placeholder="Mechanic name" /></label>
+        <label>Mechanic status<select value={form.mechanicStatus} onChange={(event) => setForm({ ...form, mechanicStatus: event.target.value })}><option value="available">Available</option><option value="traveling">Traveling</option><option value="working">Working</option><option value="break">Break</option><option value="off">Off</option></select></label>
         <label>Priority<select value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}><option value="normal">Normal</option><option value="urgent">Urgent</option></select></label>
         <label>Location<input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} placeholder="Customer address or meeting point" /></label>
         <label className="span-2">Notes<textarea rows="3" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>

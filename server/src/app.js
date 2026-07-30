@@ -15,7 +15,10 @@ import searchRoutes from "./routes/search.js";
 import scannerReportRoutes from "./routes/scannerReports.js";
 import receiptReaderRoutes from "./routes/receiptReader.js";
 import appointmentRoutes from "./routes/appointments.js";
-import { requireAuth } from "./middleware/auth.js";
+import inventoryRoutes from "./routes/inventory.js";
+import reminderRoutes from "./routes/reminders.js";
+import securityRoutes from "./routes/security.js";
+import { requireAuth, requirePermission } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -29,16 +32,19 @@ export function createApp() {
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
   app.use("/api/auth", authRoutes);
-  app.use("/api/dashboard", requireAuth, dashboardRoutes);
-  app.use("/api/customers", requireAuth, customerRoutes);
-  app.use("/api/vehicles", requireAuth, vehicleRoutes);
-  app.use("/api/work-orders", requireAuth, workOrderRoutes);
-  app.use("/api/estimates", requireAuth, estimateRoutes);
+  app.use("/api/dashboard", requireAuth, requirePermission("dashboard"), dashboardRoutes);
+  app.use("/api/customers", requireAuth, requirePermission("customers"), customerRoutes);
+  app.use("/api/vehicles", requireAuth, requirePermission("vehicles"), vehicleRoutes);
+  app.use("/api/work-orders", requireAuth, requirePermission("work_orders"), workOrderRoutes);
+  app.use("/api/estimates", requireAuth, requirePermission("estimates"), estimateRoutes);
   app.use("/api/assistant", requireAuth, assistantRoutes);
   app.use("/api/search", requireAuth, searchRoutes);
   app.use("/api/scanner-reports", requireAuth, scannerReportRoutes);
   app.use("/api/receipt-reader", requireAuth, receiptReaderRoutes);
-  app.use("/api/appointments", requireAuth, appointmentRoutes);
+  app.use("/api/appointments", requireAuth, requirePermission("appointments"), appointmentRoutes);
+  app.use("/api/inventory", requireAuth, requirePermission("inventory"), inventoryRoutes);
+  app.use("/api/reminders", requireAuth, requirePermission("reminders"), reminderRoutes);
+  app.use("/api/security", requireAuth, securityRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
     app.use(express.static(clientDistPath));

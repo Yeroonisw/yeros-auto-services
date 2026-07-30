@@ -3,6 +3,7 @@ import Appointment from "../models/Appointment.js";
 import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
 import WorkOrder from "../models/WorkOrder.js";
+import { recordAudit } from "../services/audit.js";
 
 const router = express.Router();
 const populate = [
@@ -19,6 +20,19 @@ async function validateRelations(body) {
   if (!vehicle) return "Select a valid vehicle";
   if (String(vehicle.customer) !== String(customer._id)) return "The vehicle does not belong to this customer";
   return null;
+}
+
+async function hasScheduleConflict(body, excludeId) {
+  if (!body.scheduledAt || ["cancelled", "completed", "no_show"].includes(body.status)) return false;
+  const start = new Date(body.scheduledAt);
+  const end = new Date(start.getTime() + Number(body.durationMinutes || 60) * 60000);
+  const candidates = await Appointment.find({
+    _id: { $ne: excludeId || null },
+    mechanic: body.mechanic || "Yero",
+    status: { $nin: ["cancelled", "completed", "no_show"] },
+    scheduledAt: { $lt: end },
+  }).select("scheduledAt durationMinutes");
+  return candidates.some((item) => new Date(item.scheduledAt).getTime() + Number(item.durationMinutes || 60) * 60000 > start.getTime());
 }
 
 router.get("/", async (req, res, next) => {
@@ -81,7 +95,9 @@ router.post("/", async (req, res, next) => {
   try {
     const relationError = await validateRelations(req.body);
     if (relationError) return res.status(400).json({ message: relationError });
+    if (await hasScheduleConflict(req.body)) return res.status(409).json({ message: "This mechanic already has an appointment during that time" });
     const appointment = await Appointment.create(req.body);
+    await recordAudit(req, "create", "Appointment", appointment, `Scheduled ${appointment.title}`);
     res.status(201).json(await appointment.populate(populate));
   } catch (error) {
     next(error);
@@ -99,7 +115,9 @@ router.put("/:id", async (req, res, next) => {
     if (relationError) return res.status(400).json({ message: relationError });
 
     Object.assign(current, req.body);
+    if (await hasScheduleConflict(current.toObject(), current._id)) return res.status(409).json({ message: "This mechanic already has an appointment during that time" });
     await current.save();
+    await recordAudit(req, "update", "Appointment", current, `Updated appointment ${current.title}`);
     res.json(await current.populate(populate));
   } catch (error) {
     next(error);

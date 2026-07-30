@@ -3,6 +3,7 @@ import WorkOrder from "../models/WorkOrder.js";
 import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
 import { streamDocument } from "../services/pdf.js";
+import { recordAudit } from "../services/audit.js";
 
 const router = express.Router();
 const populate = [
@@ -81,6 +82,7 @@ router.post("/", async (req, res, next) => {
     if (relationError) return res.status(400).json({ message: relationError });
     const order = await WorkOrder.create(req.body);
     await syncVehicleFromWorkOrder(order);
+    await recordAudit(req, "create", "WorkOrder", order, `Created work order ${order.orderNumber}`);
     res.status(201).json(await order.populate(populate));
   } catch (error) {
     next(error);
@@ -134,6 +136,10 @@ router.put("/:id", async (req, res, next) => {
     if (current.status !== "completed") current.completedAt = undefined;
     await current.save();
     await syncVehicleFromWorkOrder(current);
+    await recordAudit(req, "update", "WorkOrder", current, `Updated ${current.orderNumber}`, {
+      status: current.status,
+      changedFields: Object.keys(req.body || {}),
+    });
     res.json(await current.populate(populate));
   } catch (error) {
     next(error);

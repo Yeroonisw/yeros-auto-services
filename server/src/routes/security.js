@@ -1,0 +1,100 @@
+import express from "express";
+import User from "../models/User.js";
+import AuditLog from "../models/AuditLog.js";
+import { recordAudit } from "../services/audit.js";
+import Customer from "../models/Customer.js";
+import Vehicle from "../models/Vehicle.js";
+import WorkOrder from "../models/WorkOrder.js";
+import Appointment from "../models/Appointment.js";
+import Estimate from "../models/Estimate.js";
+import Part from "../models/Part.js";
+import Reminder from "../models/Reminder.js";
+import CustomerInteraction from "../models/CustomerInteraction.js";
+
+const router = express.Router();
+
+router.get("/users", async (req, res, next) => {
+  try {
+    res.json(await User.find().sort({ createdAt: 1 }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/users", async (req, res, next) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Administrator permission required" });
+    const user = await User.create(req.body);
+    await recordAudit(req, "create", "User", user, `Created ${user.role} account for ${user.email}`);
+    const safeUser = user.toObject();
+    delete safeUser.password;
+    res.status(201).json(safeUser);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/users/:id", async (req, res, next) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Administrator permission required" });
+    const allowed = ["name", "role", "active", "permissions"];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    await recordAudit(req, "update", "User", user, `Updated access for ${user.email}`);
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/change-password", async (req, res, next) => {
+  try {
+    const currentPassword = String(req.body.currentPassword || "");
+    const newPassword = String(req.body.newPassword || "");
+    if (newPassword.length < 8) return res.status(400).json({ message: "New password must contain at least 8 characters" });
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user || !(await user.matchesPassword(currentPassword))) return res.status(400).json({ message: "Current password is incorrect" });
+    user.password = newPassword;
+    user.passwordChangedAt = new Date();
+    await user.save();
+    await recordAudit(req, "password_change", "User", user, `Password changed for ${user.email}`);
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/audit", async (req, res, next) => {
+  try {
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(100, Math.max(10, Number(req.query.limit || 30)));
+    const filter = req.query.entityType ? { entityType: req.query.entityType } : {};
+    const [items, total] = await Promise.all([
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      AuditLog.countDocuments(filter),
+    ]);
+    res.json({ items, pagination: { page, limit, total, pages: Math.max(1, Math.ceil(total / limit)) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/backup", async (req, res, next) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Administrator permission required" });
+    const [customers, vehicles, workOrders, appointments, estimates, parts, reminders, interactions, audit] = await Promise.all([
+      Customer.find().lean(), Vehicle.find().lean(), WorkOrder.find().lean(), Appointment.find().lean(),
+      Estimate.find().lean(), Part.find().lean(), Reminder.find().lean(), CustomerInteraction.find().lean(),
+      AuditLog.find().sort({ createdAt: -1 }).limit(5000).lean(),
+    ]);
+    const backup = { version: 1, createdAt: new Date(), business: "Yeros Auto Services LLC", data: { customers, vehicles, workOrders, appointments, estimates, parts, reminders, interactions, audit } };
+    await recordAudit(req, "backup_export", "System", "database", "Exported encrypted-account-safe business backup");
+    res.attachment(`yeros-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    res.json(backup);
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
