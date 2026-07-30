@@ -2539,3 +2539,151 @@ textarea:focus {
 .fresh-admin .finance-disclaimer { border-color:#dce5f0;color:#64748b;background:#edf3f9; }
 .fresh-admin .detail-hero { background:linear-gradient(125deg,#081529,#164e63); }
 .fresh-admin .detail-totals .grand-total { background:#2563eb; }
+
+/* Solid operations palette */
+.fresh-admin {
+  --fresh-ink:#0b1324;
+  --fresh-muted:#64748b;
+  --fresh-cream:#eef3f8;
+  --fresh-paper:#ffffff;
+  --fresh-coral:#1d4ed8;
+  --fresh-sage:#0891b2;
+  --fresh-yellow:#38bdf8;
+  background:#eef3f8;
+}
+.fresh-admin .sidebar {
+  border-right-color:#0b1324;
+  background:#0b1324;
+  box-shadow:none;
+}
+.fresh-admin .sidebar-brand-mark { background:#1d4ed8; }
+.fresh-admin .sidebar-link:hover { background:#172a46; }
+.fresh-admin .sidebar-link.active {
+  color:#ffffff;
+  background:#1d4ed8;
+  box-shadow:none;
+}
+.fresh-admin .main-content { background:#eef3f8; }
+.fresh-admin .app-header {
+  border-bottom-color:#d7e0ea;
+  background:#ffffff;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+.fresh-admin .global-search > span,
+.fresh-admin .quick-launch a { background:#e2e8f0; }
+.fresh-admin .header-quick-button,
+.fresh-admin .button.primary,
+.fresh-admin .command-actions a:first-child {
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+  box-shadow:none;
+}
+.fresh-admin .header-quick-button:hover,
+.fresh-admin .button.primary:hover,
+.fresh-admin .command-actions a:first-child:hover { background:#173fae; }
+.command-hero {
+  border-color:#102a4d;
+  background:#102a4d;
+  box-shadow:none;
+}
+.command-hero::after { display:none; }
+.command-intro > p span {
+  background:#38bdf8;
+  box-shadow:none;
+}
+.command-actions a {
+  border-color:#31527d;
+  background:#183b68;
+  box-shadow:none;
+}
+.daily-pulse {
+  border-color:#31527d;
+  background:#183b68;
+  box-shadow:none;
+  backdrop-filter:none;
+}
+.daily-pulse .command-delta {
+  color:#0b1324;
+  background:#38bdf8;
+}
+.metric-ribbon,
+.command-card,
+.quick-launch,
+.fresh-admin .dashboard-page .dashboard-summary-strip,
+.fresh-admin .dashboard-page .stat-card {
+  border-color:#d7e0ea;
+  background:#ffffff;
+  box-shadow:none;
+}
+.metric-symbol.coral {
+  color:#ffffff;
+  background:#1d4ed8;
+}
+.metric-symbol.sage,
+.fresh-admin .dashboard-page .stat-icon {
+  color:#ffffff;
+  background:#0891b2;
+}
+.metric-symbol.gold,
+.fresh-admin .dashboard-page .stat-card:nth-child(4) .stat-icon {
+  color:#0b1324;
+  background:#38bdf8;
+}
+.metric-symbol.dark,
+.agenda-date { color:#ffffff;background:#0b1324; }
+.fresh-admin .dashboard-page .stat-card:nth-child(3) .stat-icon {
+  color:#ffffff;
+  background:#1d4ed8;
+}
+.story-chart i { background:#1d4ed8; }
+.priority-stack {
+  border-color:#0b1324;
+  background:#0b1324;
+  box-shadow:none;
+}
+.priority-icon {
+  color:#0b1324;
+  background:#38bdf8;
+}
+.priority-icon.overdue {
+  color:#ffffff;
+  background:#dc2626;
+}
+.priority-icon.estimate {
+  color:#ffffff;
+  background:#1d4ed8;
+}
+.rail-finance {
+  color:#ffffff;
+  border-color:#0891b2;
+  background:#0891b2;
+  box-shadow:none;
+}
+.rail-finance > span,
+.rail-finance p { color:#ffffff; }
+.rail-finance > div { border-bottom-color:#20a4c2; }
+.fresh-admin .dashboard-page .dashboard-hero,
+.fresh-admin .detail-hero {
+  border-color:#102a4d;
+  background:#102a4d;
+  box-shadow:none;
+}
+.fresh-admin .dashboard-page .dashboard-hero::before {
+  background:#1d4ed8;
+}
+.fresh-admin .dashboard-page .finance-card.profit {
+  background:#0891b2;
+  box-shadow:none;
+}
+.fresh-admin input:focus,
+.fresh-admin select:focus,
+.fresh-admin textarea:focus {
+  border-color:#1d4ed8;
+  box-shadow:0 0 0 3px #bfdbfe;
+}
+.fresh-admin .button,
+.fresh-admin .form-card,
+.fresh-admin .table-card,
+.fresh-admin .panel,
+.fresh-admin .card { box-shadow:none; }
