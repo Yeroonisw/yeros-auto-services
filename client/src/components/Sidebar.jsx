@@ -8,27 +8,42 @@ import {
   Activity,
   Cloud,
   FileText,
-  Gauge,
   LogOut,
   MonitorSmartphone,
   Search,
   UserRound,
   Wrench,
+  LayoutGrid,
 } from "lucide-react";
 
-const links = [
-  { to: "/dashboard", label: "Dashboard", icon: Gauge },
-  { to: "/search", label: "Deep search", icon: Search },
-  { to: "/customers", label: "Customers", icon: UserRound },
-  { to: "/vehicles", label: "Vehicles", icon: CarFront },
-  { to: "/estimates", label: "Estimates", icon: FileText },
-  { to: "/appointments", label: "Appointments", icon: CalendarClock },
-  { to: "/work-orders", label: "Work orders", icon: ClipboardList },
-  { to: "/scanner-reports", label: "Scanner reports", icon: Activity },
-  { to: "/autel-import", label: "Autel import", icon: Cloud },
-  { to: "/autel-live", label: "Autel live", icon: MonitorSmartphone },
-  { to: "/assistant", label: "AI diagnostics", icon: Bot },
-  { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
+const groups = [
+  {
+    label: "Overview",
+    links: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+      { to: "/search", label: "Deep search", icon: Search },
+    ],
+  },
+  {
+    label: "Operations",
+    links: [
+      { to: "/appointments", label: "Appointments", icon: CalendarClock },
+      { to: "/customers", label: "Customers", icon: UserRound },
+      { to: "/vehicles", label: "Vehicles", icon: CarFront },
+      { to: "/estimates", label: "Estimates", icon: FileText },
+      { to: "/work-orders", label: "Work orders", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Diagnostics",
+    links: [
+      { to: "/scanner-reports", label: "Scanner reports", icon: Activity },
+      { to: "/autel-import", label: "Autel import", icon: Cloud },
+      { to: "/autel-live", label: "Autel live", icon: MonitorSmartphone },
+      { to: "/assistant", label: "AI diagnostics", icon: Bot },
+      { to: "/manuals", label: "Lemon Manuals", icon: Wrench },
+    ],
+  },
 ];
 
 export default function Sidebar({ open, onClose }) {
@@ -45,22 +60,18 @@ export default function Sidebar({ open, onClose }) {
       <div className="brand">
         <img src="/yeros-auto-logo.png" alt="Yeros Auto Services LLC" className="sidebar-logo" />
       </div>
-      <div className="sidebar-kicker">Workspace</div>
-      <nav>
-        {links.map((link) => {
-          const Icon = link.icon;
-          return (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            onClick={onClose}
-            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-          >
-            <span className="nav-icon"><Icon size={17} strokeWidth={1.9} /></span>
-            {link.label}
-          </NavLink>
-          );
-        })}
+      <div className="sidebar-workspace"><span>Workspace</span><strong>Service operations</strong></div>
+      <nav className="sidebar-nav-groups">
+        {groups.map((group) => <section className="sidebar-nav-group" key={group.label}>
+          <div className="sidebar-kicker">{group.label}</div>
+          {group.links.map((link) => {
+            const Icon = link.icon;
+            return <NavLink key={link.to} to={link.to} onClick={onClose} className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
+              <span className="nav-icon"><Icon size={17} strokeWidth={1.9} /></span>
+              <span>{link.label}</span>
+            </NavLink>;
+          })}
+        </section>)}
       </nav>
       <div className="sidebar-footer">
         <div className="user-chip">
