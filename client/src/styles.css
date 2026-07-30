@@ -2440,3 +2440,102 @@ textarea:focus {
 @media (max-width:480px) {
   .metric-ribbon { grid-template-columns:1fr; }.metric-ribbon article { border-right:0;border-bottom:1px solid #e4dfd5!important; }.metric-ribbon article:last-child { border-bottom:0!important; }.command-actions { grid-template-columns:1fr; }.command-actions a:first-child { grid-column:auto; }
 }
+
+/* Cool clarity palette */
+.fresh-admin {
+  --fresh-ink:#17223b;
+  --fresh-muted:#718096;
+  --fresh-cream:#f3f7fb;
+  --fresh-paper:#ffffff;
+  --fresh-coral:#2563eb;
+  --fresh-sage:#0891b2;
+  --fresh-yellow:#38bdf8;
+  background:#f3f7fb;
+}
+.fresh-admin .sidebar {
+  background:
+    radial-gradient(circle at 28% 3%,rgba(37,99,235,.24),transparent 23%),
+    linear-gradient(180deg,#091225 0%,#0f1d38 56%,#132746 100%);
+}
+.fresh-admin .sidebar-workspace span,.fresh-admin .sidebar-nav-group .sidebar-kicker { color:#7f98bc; }
+.fresh-admin .nav-link { color:#b7c6dd; }
+.fresh-admin .nav-link.active { color:#10213b;background:#eaf2ff; }
+.fresh-admin .nav-link.active .nav-icon,.fresh-admin .user-chip > span { background:#2563eb; }
+.fresh-admin .main-content {
+  background:
+    radial-gradient(circle at 100% 0%,rgba(56,189,248,.1),transparent 23%),
+    #f3f7fb;
+}
+.fresh-admin .app-header { border-bottom-color:#dbe4ef;background:rgba(243,247,251,.92); }
+.fresh-admin .header-page-context > span { color:#2563eb; }
+.fresh-admin .global-search,.fresh-admin .main-content .page > .page-heading,.fresh-admin .panel,.fresh-admin .appointment-card,.fresh-admin .detail-summary-grid article,.fresh-admin .finance-card { border-color:#dce5f0;background:#fff; }
+.fresh-admin .global-search > span { background:#edf3f9; }
+.fresh-admin .header-quick-button,.fresh-admin .button.primary { background:#2563eb; }
+.fresh-admin .header-quick-button:hover,.fresh-admin .button.primary:hover { background:#1d4ed8; }
+.fresh-admin .header-quick-menu a > svg { color:#2563eb;background:#eaf2ff; }
+.fresh-admin .main-content .page > .page-heading { border-left-color:#2563eb; }
+.fresh-admin .eyebrow { color:#2563eb; }
+.fresh-admin .button.secondary { color:#075985;background:#e0f2fe; }
+.fresh-admin th { color:#64748b;border-bottom-color:#dce5f0;background:#f1f5f9; }
+.fresh-admin td { border-top-color:#e5edf5; }
+.fresh-admin tbody tr:hover { background:#f4f9ff; }
+.fresh-admin input:focus,.fresh-admin select:focus,.fresh-admin textarea:focus { border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.fresh-admin .actions .text-button { color:#075985;background:#e0f2fe; }
+.fresh-admin .actions .text-button.danger { color:#be123c;background:#fff1f2; }
+.command-hero {
+  background:
+    radial-gradient(circle at 76% 7%,rgba(56,189,248,.22),transparent 24%),
+    linear-gradient(120deg,#081529 0%,#102a4d 58%,#164e63 100%);
+}
+.command-hero::after { border-color:rgba(147,197,253,.12);box-shadow:0 0 0 55px rgba(59,130,246,.025),0 0 0 110px rgba(56,189,248,.018); }
+.command-intro > p span { background:#38bdf8;box-shadow:0 0 0 5px rgba(56,189,248,.13); }
+.command-actions a:first-child { color:white;border-color:#2563eb;background:#2563eb; }
+.daily-pulse { background:rgba(15,40,72,.64); }
+.daily-pulse header svg { color:#38bdf8; }
+.pulse-row svg { color:#38bdf8; }
+.daily-pulse .command-delta { color:#7dd3fc;background:rgba(56,189,248,.12); }
+.metric-ribbon,.command-card,.quick-launch { border-color:#dce5f0;background:#fff; }
+.metric-ribbon article { border-right-color:#e5edf5; }
+.metric-symbol.coral { color:#1d4ed8;background:#eaf2ff; }
+.metric-symbol.sage { color:#0e7490;background:#e0f7fb; }
+.metric-symbol.gold { color:#0369a1;background:#e0f2fe; }
+.metric-symbol.dark { background:#172a46; }
+.command-card > header span,.priority-stack header span,.rail-finance > span,.quick-launch > span { color:#2563eb; }
+.command-card > header a { color:#0284c7; }
+.story-chart > div > div { background:#eaf0f6; }
+.story-chart i { background:linear-gradient(180deg,#38bdf8,#2563eb); }
+.revenue-dot { background:#2563eb; }
+.stop-line i { border-color:#2563eb; }
+.agenda-date { background:#172a46; }
+.work-order-mark { color:#0e7490;background:#e0f7fb; }
+.priority-stack { background:#0e1c33; }
+.priority-stack header span { color:#7dd3fc; }
+.priority-stack header > strong { color:#0e1c33;background:#38bdf8; }
+.priority-icon { color:#38bdf8;background:rgba(56,189,248,.12); }
+.priority-icon.overdue { color:#fb7185;background:rgba(244,63,94,.13); }
+.priority-icon.estimate { color:#60a5fa;background:rgba(59,130,246,.14); }
+.rail-finance { color:#0f2745;border-color:#7dd3fc;background:linear-gradient(145deg,#bae6fd,#7dd3fc); }
+.rail-finance > div { border-bottom-color:rgba(3,105,161,.16); }
+.rail-finance p { color:#075985; }
+.service-leaders b { color:#0284c7; }
+.quick-launch a { color:#334e68;background:#edf3f9; }
+.fresh-admin .dashboard-page .dashboard-hero {
+  background:
+    radial-gradient(circle at 82% 18%,rgba(56,189,248,.24),transparent 25%),
+    linear-gradient(125deg,#081529 0%,#102a4d 62%,#164e63 100%);
+}
+.fresh-admin .dashboard-page .dashboard-hero::before { background:linear-gradient(90deg,#2563eb 0 34%,#38bdf8 34% 66%,#22d3ee 66%); }
+.fresh-admin .dashboard-page .dashboard-hero .eyebrow { color:#7dd3fc; }
+.fresh-admin .dashboard-spotlight-card span svg { color:#38bdf8; }
+.fresh-admin .dashboard-spotlight-card small { color:#7dd3fc; }
+.fresh-admin .dashboard-page .dashboard-hero-actions .button.primary { background:#2563eb; }
+.fresh-admin .dashboard-page .dashboard-summary-strip { border-color:#dce5f0;background:#fff; }
+.fresh-admin .dashboard-page .dashboard-summary-strip svg { color:#2563eb; }
+.fresh-admin .dashboard-page .stat-card { border-color:#dce5f0;background:#fff; }
+.fresh-admin .dashboard-page .stat-icon { color:#0e7490;background:#e0f7fb; }
+.fresh-admin .dashboard-page .stat-card:nth-child(3) .stat-icon { color:#1d4ed8;background:#eaf2ff; }
+.fresh-admin .dashboard-page .stat-card:nth-child(4) .stat-icon { color:#0369a1;background:#e0f2fe; }
+.fresh-admin .dashboard-page .finance-card.profit { background:linear-gradient(135deg,#0369a1,#0891b2); }
+.fresh-admin .finance-disclaimer { border-color:#dce5f0;color:#64748b;background:#edf3f9; }
+.fresh-admin .detail-hero { background:linear-gradient(125deg,#081529,#164e63); }
+.fresh-admin .detail-totals .grand-total { background:#2563eb; }
