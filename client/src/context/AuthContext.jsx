@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
     };
   }, [user]);
 
-  async function login(email, password) {
-    const { data } = await api.post("/auth/login", { email, password });
+  async function login(email, password, otp = "") {
+    const { data } = await api.post("/auth/login", { email, password, otp });
     localStorage.setItem("yeros_token", data.token);
     localStorage.setItem("yeros_user", JSON.stringify(data.user));
     setUser(data.user);

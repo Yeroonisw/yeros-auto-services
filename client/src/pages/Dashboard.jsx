@@ -82,7 +82,7 @@ export default function Dashboard() {
 
         <section className="period-performance">
           {Object.entries(data?.sales || {}).map(([period, values]) => <article key={period}>
-            <span>{period}</span><strong>{money.format(values.revenue || 0)}</strong><small>{values.orders || 0} jobs · {money.format(values.profit || 0)} profit</small>
+            <span>{period}</span><strong>{money.format(values.revenue || 0)}</strong><small>{values.orders || 0} jobs · {money.format(values.netProfit ?? values.profit ?? 0)} net</small>
           </article>)}
         </section>
 
@@ -155,7 +155,9 @@ export default function Dashboard() {
           <div><small>Sales</small><strong>{money.format(current.revenue || 0)}</strong></div>
           <div><small>Parts</small><strong>{money.format(current.partsCost || 0)}</strong></div>
           <div className="profit"><small>Gross profit</small><strong>{money.format(current.grossProfit || 0)}</strong></div>
-          <p>Before payroll, rent, insurance, tools and overhead.</p>
+          <div><small>Operating expenses</small><strong>{money.format(current.operatingExpenses || 0)}</strong></div>
+          <div className="profit"><small>Net profit</small><strong>{money.format(current.netProfit ?? current.grossProfit ?? 0)}</strong></div>
+          <p>Net profit includes recorded operating expenses.</p>
         </section>
 
         <section className="command-card service-leaders">

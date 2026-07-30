@@ -491,6 +491,108 @@ test("security center exposes users, audit and safe backups", async () => {
   assert.equal(backup.body.data.users, undefined);
 });
 
+test("digital inspections support photos, public review and signature decisions", async () => {
+  const created = await request(app)
+    .post("/api/inspections")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ customer: customer._id, vehicle: vehicle._id, mileage: 26200 })
+    .expect(201);
+  assert.equal(created.body.items.length, 12);
+  assert.equal(created.body.inspectionNumber, "INS-00001");
+
+  const updated = await request(app)
+    .put(`/api/inspections/${created.body._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({ items: created.body.items.map((item, index) => ({ ...item, condition: index === 0 ? "urgent" : "good", notes: index === 0 ? "Pads need replacement" : "" })), summary: "Brake service recommended" })
+    .expect(200);
+  assert.equal(updated.body.items[0].condition, "urgent");
+
+  const sent = await request(app)
+    .post(`/api/inspections/${created.body._id}/send`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  const publicView = await request(app).get(`/api/public/inspections/${sent.body.inspection.publicToken}`).expect(200);
+  assert.equal(publicView.body.summary, "Brake service recommended");
+  const decision = await request(app)
+    .post(`/api/public/inspections/${sent.body.inspection.publicToken}/decision`)
+    .send({ decision: "approved", signature: "Test Customer" })
+    .expect(200);
+  assert.equal(decision.body.status, "approved");
+});
+
+test("finance records operating expenses, payments and net profit", async () => {
+  await request(app)
+    .post("/api/finance/expenses")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ category: "fuel", description: "Service call fuel", amount: 20, date: new Date() })
+    .expect(201);
+  await request(app)
+    .post("/api/finance/payments")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ customer: customer._id, workOrder: order._id, type: "invoice", amount: 82.5, method: "zelle", status: "paid" })
+    .expect(201);
+  const finance = await request(app).get("/api/finance").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.equal(finance.body.summary.operatingExpenses, 20);
+  assert.equal(finance.body.summary.collected, 82.5);
+  assert.equal(finance.body.summary.netProfit, 35);
+});
+
+test("customer portal issues access, shows records and accepts login", async () => {
+  const access = await request(app)
+    .post(`/api/customers/${customer._id}/portal-access`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.match(access.body.code, /^\d{6}$/);
+  const portalLogin = await request(app)
+    .post("/api/portal/login")
+    .send({ phone: customer.phone, code: access.body.code })
+    .expect(200);
+  const account = await request(app)
+    .get("/api/portal/account")
+    .set("Authorization", `Bearer ${portalLogin.body.token}`)
+    .expect(200);
+  assert.equal(account.body.customer.name, "Updated Customer");
+  assert.equal(account.body.vehicles.length, 1);
+  assert.ok(account.body.inspections.length > 0);
+});
+
+test("mechanic assignments, timers and compensation work", async () => {
+  const users = await request(app).get("/api/security/users").set("Authorization", `Bearer ${token}`).expect(200);
+  const technicianId = users.body[0]._id;
+  await request(app)
+    .put(`/api/technicians/users/${technicianId}/compensation`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({ hourlyRate: 30, commissionRate: 10 })
+    .expect(200);
+  await request(app)
+    .post("/api/technicians/assign")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ technician: technicianId, workOrder: order._id })
+    .expect(200);
+  const timer = await request(app)
+    .post("/api/technicians/clock-in")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ technician: technicianId, workOrder: order._id })
+    .expect(201);
+  const stopped = await request(app)
+    .post(`/api/technicians/clock-out/${timer.body._id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.ok(stopped.body.minutes >= 1);
+});
+
+test("two-factor authentication can be configured and verified", async () => {
+  const setup = await request(app).post("/api/security/2fa/setup").set("Authorization", `Bearer ${token}`).expect(200);
+  const { totpCode } = await import("../src/services/totp.js");
+  const code = totpCode(setup.body.secret);
+  await request(app).post("/api/security/2fa/enable").set("Authorization", `Bearer ${token}`).send({ code }).expect(200);
+  const login = await request(app)
+    .post("/api/auth/login")
+    .send({ email: "admin@yerosautoservices.com", password: "Admin123!", otp: totpCode(setup.body.secret) })
+    .expect(200);
+  assert.ok(login.body.token);
+});
+
 test("records can be deleted in dependency order", async () => {
   const Estimate = (await import("../src/models/Estimate.js")).default;
   await Estimate.deleteMany({});

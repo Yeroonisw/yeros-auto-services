@@ -1,0 +1,23 @@
+{
+  "name": "Yeros Auto Services Workspace",
+  "short_name": "Yeros Auto",
+  "description": "Mobile operations, customers, inspections, repairs and finances for Yeros Auto Services LLC.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#0b1324",
+  "icons": [
+    {
+      "src": "/yeros-auto-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/yeros-auto-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

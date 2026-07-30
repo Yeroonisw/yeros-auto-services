@@ -10,10 +10,14 @@ const userSchema = new mongoose.Schema(
     active: { type: Boolean, default: true },
     permissions: {
       type: [String],
-      default: ["dashboard", "customers", "vehicles", "appointments", "work_orders", "estimates", "inventory", "reminders"],
+      default: ["dashboard", "customers", "vehicles", "appointments", "work_orders", "estimates", "inventory", "reminders", "inspections", "finance", "technicians"],
     },
     lastLoginAt: Date,
     passwordChangedAt: Date,
+    hourlyRate: { type: Number, min: 0, default: 0 },
+    commissionRate: { type: Number, min: 0, max: 100, default: 0 },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String, select: false },
   },
   { timestamps: true },
 );

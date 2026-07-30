@@ -57,6 +57,8 @@ const workOrderSchema = new mongoose.Schema(
     openedAt: { type: Date, default: Date.now },
     completedAt: Date,
     sourceEstimate: { type: mongoose.Schema.Types.ObjectId, ref: "Estimate" },
+    assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    paymentStatus: { type: String, enum: ["unpaid", "partial", "paid", "refunded"], default: "unpaid" },
   },
   {
     timestamps: true,

@@ -14,6 +14,8 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [otp, setOtp] = useState("");
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recovery, setRecovery] = useState({ email: "", recoveryCode: "", newPassword: "" });
   const [success, setSuccess] = useState("");
@@ -25,7 +27,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(form.email, form.password);
+      await login(form.email, form.password, otp);
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setError(errorMessage(requestError));
@@ -43,6 +45,7 @@ export default function Login() {
       setForm({ email: recovery.email, password: "" });
       setRecoveryOpen(false);
     } catch (requestError) {
+      if (requestError.response?.data?.requiresTwoFactor) setTwoFactorRequired(true);
       setError(errorMessage(requestError));
     } finally {
       setLoading(false);
@@ -81,6 +84,10 @@ export default function Login() {
             Email
             <span className="login-input-wrap"><Mail /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required autoComplete="email" placeholder="you@yerosautoservices.com" /></span>
           </label>
+          {twoFactorRequired && <label>
+            Authentication code
+            <span className="login-input-wrap"><ShieldCheck /><input inputMode="numeric" autoComplete="one-time-code" maxLength="6" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))} required placeholder="6-digit code" /></span>
+          </label>}
           <label>
             Password
             <span className="login-input-wrap"><LockKeyhole /><input type={showPassword ? "text" : "password"} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required autoComplete="current-password" placeholder="Enter your password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff /> : <Eye />}</button></span>
