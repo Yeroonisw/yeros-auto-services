@@ -5,6 +5,8 @@ import WorkOrder from "../models/WorkOrder.js";
 import Estimate from "../models/Estimate.js";
 import CustomerInteraction from "../models/CustomerInteraction.js";
 import { recordAudit } from "../services/audit.js";
+import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 
 const router = express.Router();
 
@@ -55,6 +57,22 @@ router.post("/:id/interactions", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+router.post("/:id/portal-access", async (req, res, next) => {
+  try {
+    const customer = await Customer.findById(req.params.id).select("+portalCodeHash");
+    if (!customer) return res.status(404).json({ message: "Customer not found" });
+    const code = String(crypto.randomInt(100000, 1000000));
+    customer.portalCodeHash = await bcrypt.hash(code, 12);
+    customer.portalEnabled = true;
+    await customer.save();
+    await recordAudit(req, "portal_enable", "Customer", customer, `Enabled customer portal for ${customer.name}`);
+    const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
+    const message = `Hello ${customer.name}, your Yeros Auto Services customer portal is ready. Visit ${base}/portal and use phone ${customer.phone} with access code ${code}.`;
+    const phone = String(customer.phone || "").replace(/\D/g, "");
+    res.json({ code, portalUrl: `${base}/portal`, whatsappUrl: phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "" });
+  } catch (error) { next(error); }
 });
 
 router.get("/:id", async (req, res, next) => {

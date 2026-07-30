@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import User from "../models/User.js";
 import { requireAuth } from "../middleware/auth.js";
+import LoginAttempt from "../models/LoginAttempt.js";
+import { verifyTotp } from "../services/totp.js";
 
 const router = express.Router();
 const recoveryAttempts = new Map();
@@ -17,14 +19,23 @@ router.post("/login", async (req, res, next) => {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
-    const user = await User.findOne({ email }).select("+password");
+    const ipHash = crypto.createHash("sha256").update(String(req.ip || "") + String(process.env.JWT_SECRET)).digest("hex").slice(0, 16);
+    const recentFailures = await LoginAttempt.countDocuments({ email, success: false, createdAt: { $gte: new Date(Date.now() - 15 * 60000) } });
+    if (recentFailures >= 8) return res.status(429).json({ message: "Too many sign-in attempts. Try again in 15 minutes." });
+    const user = await User.findOne({ email }).select("+password +twoFactorSecret");
 
     if (!user || user.active === false || !(await user.matchesPassword(password))) {
+      await LoginAttempt.create({ email, success: false, ipHash, userAgent: req.get("user-agent"), reason: "invalid_credentials" });
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+    if (user.twoFactorEnabled && !verifyTotp(user.twoFactorSecret, req.body.otp)) {
+      await LoginAttempt.create({ email, success: false, ipHash, userAgent: req.get("user-agent"), reason: "invalid_otp" });
+      return res.status(401).json({ message: req.body.otp ? "Invalid authentication code" : "Authentication code required", requiresTwoFactor: true });
     }
 
     user.lastLoginAt = new Date();
     await user.save();
+    await LoginAttempt.create({ email, success: true, ipHash, userAgent: req.get("user-agent"), reason: "success" });
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "8h",
     });

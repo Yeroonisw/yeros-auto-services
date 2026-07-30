@@ -17,21 +17,33 @@ export default function Reminders() {
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
+  const [automation, setAutomation] = useState(null);
+  const [notice, setNotice] = useState("");
   async function load() {
-    try { setData((await api.get("/reminders")).data); } catch (requestError) { setError(errorMessage(requestError)); }
+    try {
+      const [reminderResponse, automationResponse] = await Promise.all([api.get("/reminders"), api.get("/reminders/automation-status")]);
+      setData(reminderResponse.data); setAutomation(automationResponse.data);
+    } catch (requestError) { setError(errorMessage(requestError)); }
   }
   useEffect(() => { load(); }, []);
   const items = useMemo(() => (data?.items || []).filter((item) => filter === "all" || item.type === filter), [data, filter]);
 
-  function openWhatsApp(item) {
-    if (!item.whatsappUrl) return setError("This customer does not have a valid phone number.");
-    window.open(item.whatsappUrl, "_blank", "noopener,noreferrer");
+  async function openWhatsApp(item) {
+    if (!item.customer?._id) return setError("This reminder is missing a customer.");
+    try {
+      const { data: response } = await api.post("/reminders/dispatch", { customer: item.customer._id, channel: "whatsapp", message: item.message });
+      if (response.queued) setNotice("WhatsApp automation queued successfully.");
+      else if (response.whatsappUrl) window.open(response.whatsappUrl, "_blank", "noopener,noreferrer");
+      else setError(response.message);
+    } catch (requestError) { setError(errorMessage(requestError)); }
   }
 
   return <div className="page business-module reminders-page">
     <Alert message={error} onClose={() => setError("")} />
+    {notice && <div className="success-banner"><Check />{notice}</div>}
     <header className="module-hero"><div><span className="eyebrow">Automatic follow-up</span><h1>Customer reminders</h1><p>Oil changes, appointments, estimates, invoices and post-repair care in one queue.</p></div><span className="hero-count"><BellRing />{data?.items?.length || 0}</span></header>
     {data ? <>
+      <section className={`automation-banner ${automation?.webhookConfigured ? "connected" : ""}`}><span><BellRing /></span><div><strong>{automation?.webhookConfigured ? "Automatic messaging connected" : "Smart queue active"}</strong><p>{automation?.webhookConfigured ? "Messages can be dispatched automatically through the configured provider." : "WhatsApp opens with each message prepared. Connect an automation webhook for unattended delivery."}</p></div><b>{automation?.webhookConfigured ? "Connected" : "Manual send"}</b></section>
       <section className="reminder-filters">
         {[["all", "All", data.items.length], ["oil_change", "Oil", data.counts.oil], ["appointment", "Appointments", data.counts.appointments], ["estimate", "Estimates", data.counts.estimates], ["invoice", "Invoices", data.counts.invoices], ["repair_follow_up", "Follow-ups", data.counts.followUps]].map(([value, label, count]) =>
           <button className={filter === value ? "active" : ""} onClick={() => setFilter(value)} key={value}>{label}<b>{count || 0}</b></button>)}

@@ -5,6 +5,7 @@ import WorkOrder from "../models/WorkOrder.js";
 import Appointment from "../models/Appointment.js";
 import Estimate from "../models/Estimate.js";
 import Part from "../models/Part.js";
+import Expense from "../models/Expense.js";
 
 const router = express.Router();
 const CACHE_MS = 60_000;
@@ -57,7 +58,7 @@ router.get("/", async (req, res, next) => {
     nextWeek.setDate(nextWeek.getDate() + 7);
     const overdueThreshold = new Date(now.getTime() - 2 * 86400000);
 
-    const [customersList, vehicles, allOrders, recentOrders, upcomingAppointments, appointments, openEstimates, lowStock] = await Promise.all([
+    const [customersList, vehicles, allOrders, recentOrders, upcomingAppointments, appointments, openEstimates, lowStock, operatingExpenses] = await Promise.all([
       Customer.find().select("name phone createdAt").lean(),
       Vehicle.find().populate("customer", "name phone"),
       WorkOrder.find().populate("customer", "name phone"),
@@ -67,6 +68,7 @@ router.get("/", async (req, res, next) => {
       Appointment.find({ scheduledAt: { $gte: monthStart } }).select("status scheduledAt").lean(),
       Estimate.find({ status: { $in: ["draft", "sent"] } }).populate("customer", "name phone").sort({ createdAt: 1 }).limit(20),
       Part.find({ active: true, $expr: { $lte: ["$quantity", "$minimumStock"] } }).sort({ quantity: 1 }).limit(8),
+      Expense.find({ date: { $gte: yearStart } }).lean(),
     ]);
 
     const completedOrders = allOrders.filter((order) => order.status === "completed");
@@ -76,6 +78,11 @@ router.get("/", async (req, res, next) => {
       month: financials(completedOrders.filter((order) => orderDate(order) >= monthStart)),
       year: financials(completedOrders.filter((order) => orderDate(order) >= yearStart)),
     };
+    for (const [period, start] of Object.entries({ day: todayStart, week: weekStart, month: monthStart, year: yearStart })) {
+      const overhead = operatingExpenses.filter((expense) => new Date(expense.date) >= start).reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+      byPeriod[period].operatingExpenses = overhead;
+      byPeriod[period].netProfit = byPeriod[period].profit - overhead;
+    }
     const previousMonth = financials(completedOrders.filter((order) => {
       const date = orderDate(order);
       return date >= previousMonthStart && date < monthStart;
@@ -92,9 +99,16 @@ router.get("/", async (req, res, next) => {
       item.orders += 1;
       monthlyMap.set(month, item);
     }
+    for (const expense of operatingExpenses) {
+      const month = new Date(expense.date).toISOString().slice(0, 7);
+      const item = monthlyMap.get(month) || { month, revenue: 0, partsCost: 0, expenses: 0, grossProfit: 0, orders: 0 };
+      item.operatingExpenses = Number(item.operatingExpenses || 0) + Number(expense.amount || 0);
+      monthlyMap.set(month, item);
+    }
+    for (const item of monthlyMap.values()) item.netProfit = item.grossProfit - Number(item.operatingExpenses || 0);
     const monthly = [...monthlyMap.values()].sort((a, b) => b.month.localeCompare(a.month)).slice(0, 12);
     const currentMonthKey = now.toISOString().slice(0, 7);
-    const current = monthlyMap.get(currentMonthKey) || { month: currentMonthKey, revenue: 0, partsCost: 0, expenses: 0, grossProfit: 0, orders: 0 };
+    const current = monthlyMap.get(currentMonthKey) || { month: currentMonthKey, revenue: 0, partsCost: 0, expenses: 0, operatingExpenses: 0, grossProfit: 0, netProfit: 0, orders: 0 };
 
     const serviceMap = new Map();
     for (const order of completedOrders) {

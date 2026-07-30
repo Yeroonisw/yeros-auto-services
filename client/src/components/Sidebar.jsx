@@ -18,6 +18,9 @@ import {
   CalendarRange,
   PackageSearch,
   ShieldCheck,
+  ClipboardCheck,
+  BadgeDollarSign,
+  UsersRound,
 } from "lucide-react";
 
 const groups = [
@@ -39,6 +42,7 @@ const groups = [
       { to: "/estimates", label: "Estimates", icon: FileText, permission: "estimates" },
       { to: "/work-orders", label: "Work orders", icon: ClipboardList, permission: "work_orders" },
       { to: "/inventory", label: "Parts inventory", icon: PackageSearch, permission: "inventory" },
+      { to: "/inspections", label: "Inspections", icon: ClipboardCheck, permission: "inspections" },
     ],
   },
   {
@@ -54,6 +58,8 @@ const groups = [
   {
     label: "Administration",
     links: [
+      { to: "/finance", label: "Financial control", icon: BadgeDollarSign, permission: "finance" },
+      { to: "/technicians", label: "Mechanics & time", icon: UsersRound, permission: "technicians" },
       { to: "/security", label: "Security & audit", icon: ShieldCheck, adminOnly: true },
     ],
   },

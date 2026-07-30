@@ -27,6 +27,12 @@ const Inventory = lazy(() => import("./pages/Inventory.jsx"));
 const Reminders = lazy(() => import("./pages/Reminders.jsx"));
 const Security = lazy(() => import("./pages/Security.jsx"));
 const CalendarPro = lazy(() => import("./pages/CalendarPro.jsx"));
+const Inspections = lazy(() => import("./pages/Inspections.jsx"));
+const InspectionDetail = lazy(() => import("./pages/InspectionDetail.jsx"));
+const PublicInspection = lazy(() => import("./pages/PublicInspection.jsx"));
+const Finance = lazy(() => import("./pages/Finance.jsx"));
+const Technicians = lazy(() => import("./pages/Technicians.jsx"));
+const CustomerPortal = lazy(() => import("./pages/CustomerPortal.jsx"));
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -70,6 +76,8 @@ export default function App() {
     <Suspense fallback={<div className="route-loading"><span /><p>Loading workspace...</p></div>}><Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/portal" element={<CustomerPortal />} />
+      <Route path="/inspection/:token" element={<PublicInspection />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -90,6 +98,10 @@ export default function App() {
           <Route path="/reminders" element={<Reminders />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/security" element={<Security />} />
+          <Route path="/inspections" element={<Inspections />} />
+          <Route path="/inspections/:id" element={<InspectionDetail />} />
+          <Route path="/finance" element={<Finance />} />
+          <Route path="/technicians" element={<Technicians />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />
           <Route path="/search" element={<SearchResults />} />

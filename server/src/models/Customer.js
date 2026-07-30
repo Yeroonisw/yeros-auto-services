@@ -7,6 +7,9 @@ const customerSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true },
     address: { type: String, trim: true },
     notes: { type: String, trim: true },
+    portalEnabled: { type: Boolean, default: false },
+    portalCodeHash: { type: String, select: false },
+    portalLastLoginAt: Date,
   },
   { timestamps: true },
 );

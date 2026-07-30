@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CalendarDays, CarFront, ClipboardList, FileText, Mail, MapPin, MessageCircle, Phone, PhoneCall, Send, StickyNote, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, CarFront, ClipboardList, FileText, KeyRound, Mail, MapPin, MessageCircle, Phone, PhoneCall, Send, StickyNote, UserRound } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api, { errorMessage } from "../api.js";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
@@ -11,6 +11,7 @@ export default function CustomerDetail() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [interaction, setInteraction] = useState({ type: "note", direction: "internal", note: "" });
+  const [portalAccess, setPortalAccess] = useState(null);
 
   useEffect(() => {
     api.get(`/customers/${id}`).then(({ data: response }) => setData(response)).catch((requestError) => setError(errorMessage(requestError)));
@@ -32,6 +33,12 @@ export default function CustomerDetail() {
     const maintenance = next ? ` Your ${next.vehicle.year} ${next.vehicle.make} ${next.vehicle.model} is coming due for maintenance.` : "";
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(`Hello ${data.customer.name}, this is Yeros Auto Services.${maintenance} How can we help you?`)}`, "_blank", "noopener,noreferrer");
   }
+  async function enablePortal() {
+    try {
+      const { data: access } = await api.post(`/customers/${id}/portal-access`);
+      setPortalAccess(access);
+    } catch (requestError) { setError(errorMessage(requestError)); }
+  }
 
   return <div className="page">
     <Alert message={error} onClose={() => setError("")} />
@@ -47,7 +54,8 @@ export default function CustomerDetail() {
         <article><CarFront /><span>Last service</span><strong>{data.insights?.lastService?.orderNumber || "No service yet"}</strong><small>{data.insights?.lastService?.date ? new Date(data.insights.lastService.date).toLocaleDateString() : "—"}</small></article>
         <article><CalendarDays /><span>Next maintenance</span><strong>{data.insights?.nextMaintenance?.vehicle ? `${data.insights.nextMaintenance.vehicle.year} ${data.insights.nextMaintenance.vehicle.make}` : "Not scheduled"}</strong><small>{data.insights?.nextMaintenance?.status?.nextMileage ? `${Number(data.insights.nextMaintenance.status.nextMileage).toLocaleString()} mi` : "Add vehicle maintenance data"}</small></article>
       </section>
-      <section className="customer-contact-bar"><a href={`tel:${data.customer.phone}`}><PhoneCall />Call</a><button onClick={whatsapp}><MessageCircle />WhatsApp reminder</button>{data.customer.email && <a href={`mailto:${data.customer.email}`}><Mail />Email</a>}<span><MapPin />{data.customer.address || "No address"}</span></section>
+      <section className="customer-contact-bar"><a href={`tel:${data.customer.phone}`}><PhoneCall />Call</a><button onClick={whatsapp}><MessageCircle />WhatsApp reminder</button><button className="portal-access-button" onClick={enablePortal}><KeyRound />Portal access</button>{data.customer.email && <a href={`mailto:${data.customer.email}`}><Mail />Email</a>}<span><MapPin />{data.customer.address || "No address"}</span></section>
+      {portalAccess && <section className="portal-access-result"><KeyRound /><div><span>Customer portal access code</span><strong>{portalAccess.code}</strong><small>Send this code once. Generating another code replaces it.</small></div>{portalAccess.whatsappUrl && <a href={portalAccess.whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle />Send by WhatsApp</a>}</section>}
       <div className="profile-grid">
         <section className="panel profile-section">
           <div className="panel-heading"><h2><CarFront size={18} /> Vehicles</h2><p>{data.vehicles.length} registered vehicles.</p></div>

@@ -6,6 +6,7 @@ import Appointment from "../models/Appointment.js";
 import Estimate from "../models/Estimate.js";
 import WorkOrder from "../models/WorkOrder.js";
 import { recordAudit } from "../services/audit.js";
+import CustomerInteraction from "../models/CustomerInteraction.js";
 
 const router = express.Router();
 const customerFields = "name phone email";
@@ -77,6 +78,40 @@ router.get("/", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+router.get("/automation-status", (req, res) => {
+  res.json({
+    webhookConfigured: Boolean(process.env.AUTOMATION_WEBHOOK_URL),
+    channels: {
+      whatsapp: Boolean(process.env.AUTOMATION_WEBHOOK_URL),
+      sms: Boolean(process.env.AUTOMATION_WEBHOOK_URL),
+      email: Boolean(process.env.AUTOMATION_WEBHOOK_URL),
+    },
+  });
+});
+
+router.post("/dispatch", async (req, res, next) => {
+  try {
+    const customer = await Customer.findById(req.body.customer);
+    if (!customer) return res.status(404).json({ message: "Customer not found" });
+    const channel = String(req.body.channel || "whatsapp");
+    const message = String(req.body.message || "").trim();
+    if (!message) return res.status(400).json({ message: "Message is required" });
+    if (!process.env.AUTOMATION_WEBHOOK_URL) {
+      const phone = String(customer.phone || "").replace(/\D/g, "");
+      return res.status(202).json({ queued: false, requiresProvider: true, whatsappUrl: channel === "whatsapp" && phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "", message: "Automatic provider is not configured; use the prepared WhatsApp action." });
+    }
+    const response = await fetch(process.env.AUTOMATION_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(process.env.AUTOMATION_WEBHOOK_SECRET ? { Authorization: `Bearer ${process.env.AUTOMATION_WEBHOOK_SECRET}` } : {}) },
+      body: JSON.stringify({ channel, customer: { id: customer.id, name: customer.name, phone: customer.phone, email: customer.email }, message, source: "yeros-auto-services" }),
+    });
+    if (!response.ok) throw new Error(`Message provider returned ${response.status}`);
+    await CustomerInteraction.create({ customer: customer._id, type: channel === "whatsapp" ? "whatsapp" : channel === "email" ? "email" : "sms", direction: "outbound", note: message, createdBy: req.user._id });
+    await recordAudit(req, "dispatch", "Customer", customer, `Sent ${channel} automation to ${customer.name}`);
+    res.json({ queued: true, channel });
+  } catch (error) { next(error); }
 });
 
 router.post("/", async (req, res, next) => {

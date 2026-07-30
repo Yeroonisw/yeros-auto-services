@@ -7,14 +7,15 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("yeros_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && !config.skipAdminAuth) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && !error.config.url.endsWith("/auth/login")) {
+    const publicSession = error.config?.skipAdminAuth || error.config?.url?.includes("/portal/") || error.config?.url?.includes("/public/");
+    if (error.response?.status === 401 && !error.config.url.endsWith("/auth/login") && !publicSession) {
       localStorage.removeItem("yeros_token");
       localStorage.removeItem("yeros_user");
       window.location.assign("/login");

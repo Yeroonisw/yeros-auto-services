@@ -18,6 +18,11 @@ import appointmentRoutes from "./routes/appointments.js";
 import inventoryRoutes from "./routes/inventory.js";
 import reminderRoutes from "./routes/reminders.js";
 import securityRoutes from "./routes/security.js";
+import inspectionRoutes from "./routes/inspections.js";
+import publicInspectionRoutes from "./routes/publicInspections.js";
+import financeRoutes from "./routes/finance.js";
+import technicianRoutes from "./routes/technicians.js";
+import portalRoutes from "./routes/portal.js";
 import { requireAuth, requirePermission } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 
@@ -32,6 +37,8 @@ export function createApp() {
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
   app.use("/api/auth", authRoutes);
+  app.use("/api/portal", portalRoutes);
+  app.use("/api/public/inspections", publicInspectionRoutes);
   app.use("/api/dashboard", requireAuth, requirePermission("dashboard"), dashboardRoutes);
   app.use("/api/customers", requireAuth, requirePermission("customers"), customerRoutes);
   app.use("/api/vehicles", requireAuth, requirePermission("vehicles"), vehicleRoutes);
@@ -45,6 +52,9 @@ export function createApp() {
   app.use("/api/inventory", requireAuth, requirePermission("inventory"), inventoryRoutes);
   app.use("/api/reminders", requireAuth, requirePermission("reminders"), reminderRoutes);
   app.use("/api/security", requireAuth, securityRoutes);
+  app.use("/api/inspections", requireAuth, requirePermission("inspections"), inspectionRoutes);
+  app.use("/api/finance", requireAuth, requirePermission("finance"), financeRoutes);
+  app.use("/api/technicians", requireAuth, requirePermission("technicians"), technicianRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
     app.use(express.static(clientDistPath));

@@ -24,6 +24,8 @@ const estimateSchema = new mongoose.Schema(
     taxRate: { type: Number, min: 0, max: 100, default: 0 },
     notes: { type: String, trim: true },
     validUntil: Date,
+    customerDecisionAt: Date,
+    customerSignature: String,
     convertedWorkOrder: { type: mongoose.Schema.Types.ObjectId, ref: "WorkOrder" },
   },
   {
