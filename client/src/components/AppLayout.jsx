@@ -27,7 +27,7 @@ export default function AppLayout() {
   const [title, subtitle] = pageNames[segment] || ["Workspace", "Yeros Auto Services"];
 
   return (
-    <div className="app-shell admin-v2">
+    <div className="app-shell admin-v2 fresh-admin">
       <Sidebar open={open} onClose={() => setOpen(false)} />
       {open && <button className="sidebar-overlay" onClick={() => setOpen(false)} aria-label="Close menu" />}
       <main className="main-content">
