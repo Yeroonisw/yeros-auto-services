@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { appendReceiptLines, previewReceipt } from "../receiptReader.js";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
@@ -19,6 +19,7 @@ const blank = {
 
 export default function WorkOrders() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -51,6 +52,9 @@ export default function WorkOrders() {
   }
   useEffect(() => { loadReferences(); }, []);
   useEffect(() => { loadOrders(); }, [page, status, query]);
+  useEffect(() => {
+    if (searchParams.get("new") === "1" && customers.length && vehicles.length && !modalOpen) open();
+  }, [searchParams, customers, vehicles]);
 
   const customerVehicles = useMemo(() => vehicles.filter((vehicle) => (vehicle.customer?._id || vehicle.customer) === form.customer), [vehicles, form.customer]);
   const subtotal = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0), [form]);
@@ -144,7 +148,7 @@ export default function WorkOrders() {
       };
       if (editing) await api.put(`/work-orders/${editing._id}`, payload);
       else await api.post("/work-orders", payload);
-      setModalOpen(false); await Promise.all([loadOrders(), loadReferences()]);
+      setModalOpen(false); setSearchParams({}); await Promise.all([loadOrders(), loadReferences()]);
     } catch (requestError) { setError(errorMessage(requestError)); }
     finally { setSaving(false); }
   }
@@ -181,7 +185,7 @@ export default function WorkOrders() {
         </table></div> : <Empty>No work orders match this view.</Empty>}
         {!loading && <div className="pagination"><span>{pagination.total} work orders · Page {pagination.page} of {pagination.pages}</span><div><button onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} aria-label="Previous page"><ChevronLeft /></button><button onClick={() => setPage((value) => Math.min(pagination.pages, value + 1))} disabled={page >= pagination.pages} aria-label="Next page"><ChevronRight /></button></div></div>}
       </section>
-      {modalOpen && <Modal title={editing ? `Edit ${editing.orderNumber}` : "New work order"} onClose={() => setModalOpen(false)} wide>
+      {modalOpen && <Modal title={editing ? `Edit ${editing.orderNumber}` : "New work order"} onClose={() => { setModalOpen(false); setSearchParams({}); }} wide>
         <form className="form-grid" onSubmit={submit}>
           <label>Customer<select value={form.customer} onChange={(e) => updateCustomer(e.target.value)} required><option value="">Select customer</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
           <label>Vehicle<select value={form.vehicle} onChange={(e) => updateVehicle(e.target.value)} required><option value="">Select vehicle</option>{customerVehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.plate ? `- ${vehicle.plate}` : ""}</option>)}</select></label>
@@ -229,7 +233,7 @@ export default function WorkOrders() {
           <label className="span-2">Notes<textarea rows="3" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
           <div className="order-total span-2"><span>Estimated total</span><strong>{money.format(subtotal * (1 + Number(form.taxRate || 0) / 100))}</strong></div>
           <div className="profit-preview span-2"><span>Parts cost: <strong>{money.format(partsCost)}</strong></span><span>Gross profit before overhead: <strong>{money.format(subtotal - partsCost)}</strong></span></div>
-          <div className="form-actions span-2"><button type="button" className="button secondary" onClick={() => setModalOpen(false)}>Cancel</button><button className="button primary" disabled={saving}>{saving ? "Saving..." : "Save work order"}</button></div>
+          <div className="form-actions span-2"><button type="button" className="button secondary" onClick={() => { setModalOpen(false); setSearchParams({}); }}>Cancel</button><button className="button primary" disabled={saving}>{saving ? "Saving..." : "Save work order"}</button></div>
         </form>
       </Modal>}
     </div>

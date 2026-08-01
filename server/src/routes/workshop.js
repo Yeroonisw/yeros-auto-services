@@ -7,9 +7,10 @@ const stages = ["scheduled", "check_in", "diagnosing", "waiting_approval", "wait
 
 router.get("/", async (req, res, next) => {
   try {
-    const orders = await WorkOrder.find({ status: { $nin: ["cancelled"] }, workflowStage: { $ne: "delivered" } })
-      .populate("customer", "name phone").populate("vehicle", "year make model plate")
-      .sort({ promisedAt: 1, createdAt: 1 }).lean({ virtuals: true });
+    const orders = await WorkOrder.find({ status: { $nin: ["cancelled", "completed"] }, workflowStage: { $ne: "delivered" } })
+      .populate("customer", "name phone").populate("vehicle", "year make model plate color")
+      .populate("assignedTechnician", "name")
+      .sort({ promisedAt: 1, createdAt: 1 });
     const columns = Object.fromEntries(stages.map((stage) => [stage, orders.filter((item) => item.workflowStage === stage)]));
     const overdue = orders.filter((item) => item.promisedAt && new Date(item.promisedAt) < new Date()).length;
     res.json({ stages, columns, summary: { active: orders.length, overdue, waitingParts: columns.waiting_parts.length, ready: columns.ready_pickup.length } });
@@ -22,6 +23,7 @@ router.put("/:id/stage", async (req, res, next) => {
     const order = await WorkOrder.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Work order not found" });
     order.workflowStage = req.body.stage;
+    if (order.status === "completed" && req.body.stage !== "delivered") order.status = "in_progress";
     if (req.body.stage === "working" && !order.startedAt) order.startedAt = new Date();
     if (req.body.stage === "quality_check") order.qualityCheckedAt = new Date();
     if (req.body.stage === "delivered") { order.status = "completed"; order.completedAt ||= new Date(); }
