@@ -1,0 +1,104 @@
+.fresh-admin .app-header {
+  grid-template-columns: minmax(180px, auto) minmax(220px, 600px) max-content;
+  align-items: center;
+}
+
+.fresh-admin .global-search {
+  min-width: 0;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+.fresh-admin .global-search input {
+  width: 100%;
+  min-width: 0;
+}
+
+.header-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.header-actions .header-install-button {
+  min-height: 42px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1320px) {
+  .fresh-admin .app-header {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .fresh-admin .header-page-context {
+    display: none;
+  }
+
+  .fresh-admin .global-search {
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 980px) {
+  .header-actions .header-install-button {
+    width: 42px;
+    overflow: hidden;
+    padding: 0;
+    justify-content: center;
+    color: transparent;
+    font-size: 0;
+  }
+
+  .header-actions .header-install-button svg {
+    color: #1d4ed8;
+  }
+
+  .header-actions .header-alert-button {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .fresh-admin .app-header {
+    grid-template-columns: 42px minmax(0, 1fr) max-content;
+    gap: 8px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions .header-install-button {
+    display: none;
+  }
+
+  .fresh-admin .global-search {
+    width: 100%;
+  }
+
+  .fresh-admin .global-search > span {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .fresh-admin .app-header {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .fresh-admin .global-search {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 7px;
+    padding-left: 10px;
+    padding-right: 8px;
+  }
+
+  .fresh-admin .global-search input::placeholder {
+    color: transparent;
+  }
+}

@@ -61,17 +61,19 @@ export default function AppLayout() {
             <small>{subtitle}</small>
           </div>
           <GlobalSearch />
-          {installPrompt && <button className="header-install-button" onClick={installApp}><Download />Install app</button>}
-          {"Notification" in window && Notification.permission === "default" && <button className="header-install-button" onClick={enableNotifications}>Enable alerts</button>}
-          <div className="header-quick-wrap">
-            <button className="header-quick-button" onClick={() => setQuickOpen(!quickOpen)} aria-expanded={quickOpen}>
-              <Plus size={17} /> <span>Quick create</span>
-            </button>
-            {quickOpen && <div className="header-quick-menu">
-              <Link to="/customers" onClick={() => setQuickOpen(false)}><UserPlus /><span><strong>New customer</strong><small>Add contact and vehicle</small></span></Link>
-              <Link to="/work-orders" onClick={() => setQuickOpen(false)}><FilePlus2 /><span><strong>Work order</strong><small>Start a new repair</small></span></Link>
-              <Link to="/appointments" onClick={() => setQuickOpen(false)}><CalendarPlus /><span><strong>Appointment</strong><small>Schedule service</small></span></Link>
-            </div>}
+          <div className="header-actions">
+            {installPrompt && <button className="header-install-button" onClick={installApp}><Download />Install app</button>}
+            {"Notification" in window && Notification.permission === "default" && <button className="header-install-button header-alert-button" onClick={enableNotifications}>Enable alerts</button>}
+            <div className="header-quick-wrap">
+              <button className="header-quick-button" onClick={() => setQuickOpen(!quickOpen)} aria-expanded={quickOpen}>
+                <Plus size={17} /> <span>Quick create</span>
+              </button>
+              {quickOpen && <div className="header-quick-menu">
+                <Link to="/customers" onClick={() => setQuickOpen(false)}><UserPlus /><span><strong>New customer</strong><small>Add contact and vehicle</small></span></Link>
+                <Link to="/work-orders" onClick={() => setQuickOpen(false)}><FilePlus2 /><span><strong>Work order</strong><small>Start a new repair</small></span></Link>
+                <Link to="/appointments" onClick={() => setQuickOpen(false)}><CalendarPlus /><span><strong>Appointment</strong><small>Schedule service</small></span></Link>
+              </div>}
+            </div>
           </div>
         </header>
         <Outlet />
