@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import GlobalSearch from "./GlobalSearch.jsx";
-import { CalendarPlus, FilePlus2, Menu, Plus, UserPlus } from "lucide-react";
+import { CalendarPlus, Download, FilePlus2, Menu, Plus, UserPlus } from "lucide-react";
 
 const pageNames = {
   dashboard: ["Dashboard", "Overview of your shop"],
@@ -29,9 +29,25 @@ const pageNames = {
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
   const location = useLocation();
   const segment = location.pathname.split("/").filter(Boolean)[0] || "dashboard";
   const [title, subtitle] = pageNames[segment] || ["Workspace", "Yeros Auto Services"];
+  useEffect(() => {
+    const capture = (event) => { event.preventDefault(); setInstallPrompt(event); };
+    window.addEventListener("beforeinstallprompt", capture);
+    return () => window.removeEventListener("beforeinstallprompt", capture);
+  }, []);
+  async function installApp() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    setInstallPrompt(null);
+  }
+  async function enableNotifications() {
+    if (!("Notification" in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") new Notification("Yeros notifications enabled", { body: "You can now receive shop alerts on this device.", icon: "/yeros-auto-logo.png" });
+  }
 
   return (
     <div className="app-shell admin-v2 fresh-admin">
@@ -48,6 +64,8 @@ export default function AppLayout() {
             <small>{subtitle}</small>
           </div>
           <GlobalSearch />
+          {installPrompt && <button className="header-install-button" onClick={installApp}><Download />Install app</button>}
+          {"Notification" in window && Notification.permission === "default" && <button className="header-install-button" onClick={enableNotifications}>Enable alerts</button>}
           <div className="header-quick-wrap">
             <button className="header-quick-button" onClick={() => setQuickOpen(!quickOpen)} aria-expanded={quickOpen}>
               <Plus size={17} /> <span>Quick create</span>
