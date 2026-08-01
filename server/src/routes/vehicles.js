@@ -11,7 +11,7 @@ const router = express.Router();
 router.get("/", async (req, res, next) => {
   try {
     const filter = req.query.customer ? { customer: req.query.customer } : {};
-    res.json(await Vehicle.find(filter).populate("customer", "name phone").sort({ createdAt: -1 }));
+    res.json(await Vehicle.find(filter).select("customer year make model engine vin plate color mileage oilChange createdAt").populate("customer", "name phone").sort({ createdAt: -1 }).lean());
   } catch (error) {
     next(error);
   }

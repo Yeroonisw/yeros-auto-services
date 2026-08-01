@@ -115,4 +115,6 @@ workOrderSchema.index({ workflowStage: 1, promisedAt: 1 });
 workOrderSchema.index({ customer: 1, completedAt: -1 });
 workOrderSchema.index({ vehicle: 1, completedAt: -1 });
 workOrderSchema.index({ completedAt: -1 });
+workOrderSchema.index({ createdAt: -1 });
+workOrderSchema.index({ orderNumber: 1, status: 1 });
 export default mongoose.model("WorkOrder", workOrderSchema);

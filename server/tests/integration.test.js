@@ -187,6 +187,17 @@ test("customer history includes vehicles and repairs", async () => {
   assert.equal(history.body.orders[0].orderNumber, order.orderNumber);
 });
 
+test("work order list supports fast pagination and filters", async () => {
+  const page = await request(app)
+    .get(`/api/work-orders?page=1&limit=10&status=completed&search=${encodeURIComponent(order.orderNumber)}`)
+    .set("Authorization", `Bearer ${token}`)
+    .expect(200);
+  assert.equal(page.body.items.length, 1);
+  assert.equal(page.body.items[0].orderNumber, order.orderNumber);
+  assert.equal(page.body.pagination.total, 1);
+  assert.equal(page.body.pagination.pages, 1);
+});
+
 test("customer and vehicle detail pages have related records", async () => {
   const customerDetail = await request(app)
     .get(`/api/customers/${customer._id}`)

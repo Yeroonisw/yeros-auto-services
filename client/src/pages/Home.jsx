@@ -198,13 +198,13 @@ export default function Home() {
           <div className="bm-payments"><span>{t.payments}</span>{t.paymentNames.map((name, index) => <strong key={name}>{index === 0 ? "💵" : index === 4 ? "💳" : "●"} {name}</strong>)}</div>
         </div>
         <div className="bm-hero-media">
-          <div className="bm-photo-wrap"><img src="/mobile-mechanic-hero.png" alt={`${business.name} mobile mechanic`} /></div>
+          <div className="bm-photo-wrap"><img src="/mobile-mechanic-hero.png" alt={`${business.name} mobile mechanic`} fetchPriority="high" decoding="async" /></div>
           <div className="bm-floating-card"><span />{t.available}</div>
         </div>
       </section>
 
       <section className="bm-about" id="about">
-        <div className="bm-about-photo"><img src="/mobile-mechanic-hero.png" alt="Mobile mechanic at work" /><div><strong>24/7</strong><span>{t.always}</span></div></div>
+        <div className="bm-about-photo"><img src="/mobile-mechanic-hero.png" alt="Mobile mechanic at work" loading="lazy" decoding="async" /><div><strong>24/7</strong><span>{t.always}</span></div></div>
         <div className="bm-about-copy"><p className="bm-tag">{t.aboutTag}</p><h2>{t.aboutTitle}</h2><p>{t.aboutText1}</p><p>{t.aboutText2}</p>
           <div className="bm-about-stats"><div><strong>24/7</strong><span>{t.always}</span></div><div><strong>35mi</strong><span>{t.coverage}</span></div><div><strong>14+</strong><span>{t.servicesCount}</span></div></div>
           <div className="bm-inline-actions"><a className="bm-button red" href={`tel:${business.phone}`}><Phone />{t.call}</a><a className="bm-button outline" href={`https://wa.me/${business.whatsapp}`} target="_blank" rel="noreferrer"><MessageCircle />{t.whatsapp}</a></div>

@@ -16,7 +16,7 @@ router.get("/", async (req, res, next) => {
     const filter = search
       ? { $or: ["name", "phone", "email"].map((field) => ({ [field]: { $regex: search, $options: "i" } })) }
       : {};
-    res.json(await Customer.find(filter).sort({ createdAt: -1 }));
+    res.json(await Customer.find(filter).sort({ createdAt: -1 }).lean());
   } catch (error) {
     next(error);
   }

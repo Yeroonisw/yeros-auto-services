@@ -65,8 +65,17 @@ export function createApp() {
   app.use("/api/marketing", requireAuth, requirePermission("customers"), marketingRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
-    app.use(express.static(clientDistPath));
-    app.get(/^(?!\/api).*/, (req, res) => res.sendFile(clientIndexPath));
+    app.use(express.static(clientDistPath, {
+      setHeaders(res, filePath) {
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        else if (filePath.endsWith("sw.js") || filePath.endsWith("index.html")) res.setHeader("Cache-Control", "no-cache");
+        else res.setHeader("Cache-Control", "public, max-age=86400");
+      },
+    }));
+    app.get(/^(?!\/api).*/, (req, res) => {
+      res.setHeader("Cache-Control", "no-cache");
+      res.sendFile(clientIndexPath);
+    });
   }
 
   app.use(notFound);
