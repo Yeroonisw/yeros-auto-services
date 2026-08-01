@@ -3,6 +3,7 @@ import api, { errorMessage } from "../api.js";
 import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { appendReceiptLines, previewReceipt } from "../receiptReader.js";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -11,6 +12,8 @@ const paymentMethods = ["Pending", "Cash", "Credit / Debit Card", "Zelle", "Cash
 const blank = {
   customer: "", vehicle: "", status: "pending",
   services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
+  dtcCodes: [{ code: "", description: "", status: "active" }],
+  oilChange: { performed: false, mileage: 0, serviceDate: new Date().toISOString().slice(0, 10), intervalMiles: 3000, intervalMonths: 3, notes: "" },
   labor: 0, taxRate: 0, paymentMethod: "Pending", notes: "",
 };
 
@@ -26,6 +29,7 @@ export default function WorkOrders() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
+  const [readingReceipt, setReadingReceipt] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [status, setStatus] = useState("");
@@ -54,6 +58,7 @@ export default function WorkOrders() {
 
   const customerVehicles = useMemo(() => vehicles.filter((vehicle) => (vehicle.customer?._id || vehicle.customer) === form.customer), [vehicles, form.customer]);
   const subtotal = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0), [form]);
+  const partsCost = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.cost || 0), 0), [form]);
 
   function open(order = null) {
     setEditing(order);
@@ -61,6 +66,15 @@ export default function WorkOrders() {
       setForm({
         customer: order.customer?._id || "", vehicle: order.vehicle?._id || "", status: order.status,
         services: order.services.length ? order.services.map(({ description, quantity, price, cost }) => ({ description, quantity, price, cost: cost || 0 })) : [{ description: "", quantity: 1, price: 0, cost: 0 }],
+        dtcCodes: order.dtcCodes?.length ? order.dtcCodes.map(({ code, description, status }) => ({ code, description, status })) : [{ code: "", description: "", status: "active" }],
+        oilChange: {
+          performed: Boolean(order.oilChange?.performed),
+          mileage: order.oilChange?.mileage || order.vehicle?.mileage || 0,
+          serviceDate: order.oilChange?.serviceDate ? order.oilChange.serviceDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          intervalMiles: order.oilChange?.intervalMiles || 3000,
+          intervalMonths: order.oilChange?.intervalMonths || 3,
+          notes: order.oilChange?.notes || "",
+        },
         labor: order.labor || 0, taxRate: order.taxRate || 0, paymentMethod: order.paymentMethod || "Pending", notes: order.notes || "",
       });
     } else {
@@ -70,7 +84,9 @@ export default function WorkOrders() {
         ...blank,
         customer,
         vehicle: firstVehicle?._id || "",
+        oilChange: { ...blank.oilChange, mileage: firstVehicle?.mileage || 0 },
         services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
+        dtcCodes: [{ code: "", description: "", status: "active" }],
       });
     }
     setModalOpen(true);
@@ -78,15 +94,32 @@ export default function WorkOrders() {
 
   function updateCustomer(customer) {
     const firstVehicle = vehicles.find((vehicle) => (vehicle.customer?._id || vehicle.customer) === customer);
-    setForm({ ...form, customer, vehicle: firstVehicle?._id || "" });
+    setForm({ ...form, customer, vehicle: firstVehicle?._id || "", oilChange: { ...form.oilChange, mileage: firstVehicle?.mileage || form.oilChange.mileage } });
   }
 
   function updateVehicle(vehicleId) {
-    setForm({ ...form, vehicle: vehicleId });
+    const vehicle = vehicles.find((item) => item._id === vehicleId);
+    setForm({ ...form, vehicle: vehicleId, oilChange: { ...form.oilChange, mileage: vehicle?.mileage || form.oilChange.mileage } });
   }
 
   function updateService(index, field, value) {
     setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
+  }
+
+  async function importReceipt(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setReadingReceipt(true); setError("");
+    try {
+      const receipt = await previewReceipt(file);
+      setForm((current) => ({ ...current, services: appendReceiptLines(current.services, receipt.items, { includeCost: true }) }));
+    } catch (requestError) { setError(errorMessage(requestError)); }
+    finally { setReadingReceipt(false); }
+  }
+
+  function updateDtc(index, field, value) {
+    setForm({ ...form, dtcCodes: form.dtcCodes.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
   }
 
   async function downloadInvoice(order) {
@@ -109,7 +142,9 @@ export default function WorkOrders() {
     try {
       const payload = {
         ...form,
+        oilChange: { ...form.oilChange, serviceDate: form.oilChange.serviceDate || null },
         services: form.services.filter((item) => item.description.trim()),
+        dtcCodes: form.dtcCodes.filter((item) => item.code.trim()),
       };
       if (editing) await api.put(`/work-orders/${editing._id}`, payload);
       else await api.post("/work-orders", payload);
@@ -151,28 +186,53 @@ export default function WorkOrders() {
         {!loading && <div className="pagination"><span>{pagination.total} work orders · Page {pagination.page} of {pagination.pages}</span><div><button onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} aria-label="Previous page"><ChevronLeft /></button><button onClick={() => setPage((value) => Math.min(pagination.pages, value + 1))} disabled={page >= pagination.pages} aria-label="Next page"><ChevronRight /></button></div></div>}
       </section>
       {modalOpen && <Modal title={editing ? `Edit ${editing.orderNumber}` : "New work order"} onClose={() => { setModalOpen(false); setSearchParams({}); }} wide>
-        <form className="form-grid essential-order-form" onSubmit={submit}>
+        <form className="form-grid" onSubmit={submit}>
           <label>Customer<select value={form.customer} onChange={(e) => updateCustomer(e.target.value)} required><option value="">Select customer</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
           <label>Vehicle<select value={form.vehicle} onChange={(e) => updateVehicle(e.target.value)} required><option value="">Select vehicle</option>{customerVehicles.map((vehicle) => <option key={vehicle._id} value={vehicle._id}>{vehicle.year} {vehicle.make} {vehicle.model} {vehicle.plate ? `- ${vehicle.plate}` : ""}</option>)}</select></label>
           <label className="span-2">Status<select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <div className="span-2 service-editor">
             <div className="service-heading">
               <strong>Services and parts</strong>
-              <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}>+ Add line</button>
+              <span className="line-actions">
+                <label className={`text-button file-action ${readingReceipt ? "disabled" : ""}`}>{readingReceipt ? "Reading..." : "Import receipt"}<input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={importReceipt} disabled={readingReceipt} /></label>
+                <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}>+ Add line</button>
+              </span>
             </div>
-            <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Price</span><span /></div>
+            <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Sale price</span><span>Part cost</span><span /></div>
             {form.services.map((item, index) => <div className="service-row" key={index}>
               <input aria-label="Description" placeholder="Description" value={item.description} onChange={(e) => updateService(index, "description", e.target.value)} />
               <input aria-label="Quantity" type="number" min="0" step="0.1" value={item.quantity} onChange={(e) => updateService(index, "quantity", Number(e.target.value))} />
               <input aria-label="Price" type="number" min="0" step="0.01" value={item.price} onChange={(e) => updateService(index, "price", Number(e.target.value))} />
+              <input aria-label="Internal part cost" type="number" min="0" step="0.01" value={item.cost || 0} onChange={(e) => updateService(index, "cost", Number(e.target.value))} />
               <button type="button" className="remove-line" onClick={() => setForm({ ...form, services: form.services.filter((_, i) => i !== index) })} disabled={form.services.length === 1}>x</button>
             </div>)}
+          </div>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Diagnostic trouble codes (DTC)</strong><button type="button" className="text-button" onClick={() => setForm({ ...form, dtcCodes: [...form.dtcCodes, { code: "", description: "", status: "active" }] })}>+ Add DTC</button></div>
+            {form.dtcCodes.map((item, index) => <div className="dtc-row" key={index}>
+              <input aria-label="DTC code" placeholder="P0300" value={item.code} onChange={(e) => updateDtc(index, "code", e.target.value.toUpperCase())} />
+              <input aria-label="DTC description" placeholder="Description or diagnostic note" value={item.description} onChange={(e) => updateDtc(index, "description", e.target.value)} />
+              <select aria-label="DTC status" value={item.status} onChange={(e) => updateDtc(index, "status", e.target.value)}><option value="active">Active</option><option value="pending">Pending</option><option value="history">History</option></select>
+              <button type="button" className="remove-line" onClick={() => setForm({ ...form, dtcCodes: form.dtcCodes.filter((_, i) => i !== index) })} disabled={form.dtcCodes.length === 1}>x</button>
+            </div>)}
+          </div>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Oil change performed</strong><span>Updates vehicle mileage and next service</span></div>
+            <label className="checkbox-line"><input type="checkbox" checked={form.oilChange.performed} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, performed: e.target.checked } })} /> Mark this work order as an oil change</label>
+            {form.oilChange.performed && <div className="oil-change-grid">
+              <label>Service date<input type="date" value={form.oilChange.serviceDate} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, serviceDate: e.target.value } })} /></label>
+              <label>Current mileage<input type="number" min="0" value={form.oilChange.mileage} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, mileage: Number(e.target.value) } })} /></label>
+              <label>Next interval miles<input type="number" min="0" value={form.oilChange.intervalMiles} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMiles: Number(e.target.value) } })} /></label>
+              <label>Next interval months<input type="number" min="0" value={form.oilChange.intervalMonths} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMonths: Number(e.target.value) } })} /></label>
+              <label className="span-2">Oil/filter notes<input value={form.oilChange.notes} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, notes: e.target.value } })} placeholder="5W-20, filter number, brand..." /></label>
+            </div>}
           </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(e) => setForm({ ...form, labor: Number(e.target.value) })} /></label>
           <label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: Number(e.target.value) })} /></label>
           <label className="span-2">Payment method<select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>{paymentMethods.map((method) => <option key={method} value={method}>{method}</option>)}</select></label>
           <label className="span-2">Notes<textarea rows="3" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
           <div className="order-total span-2"><span>Estimated total</span><strong>{money.format(subtotal * (1 + Number(form.taxRate || 0) / 100))}</strong></div>
+          <div className="profit-preview span-2"><span>Parts cost: <strong>{money.format(partsCost)}</strong></span><span>Gross profit before overhead: <strong>{money.format(subtotal - partsCost)}</strong></span></div>
           <div className="form-actions span-2"><button type="button" className="button secondary" onClick={() => { setModalOpen(false); setSearchParams({}); }}>Cancel</button><button className="button primary" disabled={saving}>{saving ? "Saving..." : "Save work order"}</button></div>
         </form>
       </Modal>}
