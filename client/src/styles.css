@@ -3101,6 +3101,7 @@ textarea:focus {
 .job-card select { width:100%;padding:8px;border:1px solid #cbd5e1;background:#f8fafc;font-size:12px;font-weight:700; }
 .suite-table { margin-top:18px; }
 .order-toolbar select { min-width:170px;padding:0 12px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700; }
+.essential-order-form .service-row { grid-template-columns:minmax(0,1fr) 74px 120px 36px; }
 .button.compact { padding:8px 10px;font-size:11px;white-space:nowrap; }
 .button.compact svg { width:14px; }
 .report-range { display:flex;align-items:flex-end;gap:10px;margin:18px 0;padding:15px;border:1px solid #d7e0ea;background:#fff; }
