@@ -2,6 +2,7 @@ import express from "express";
 import Inspection from "../models/Inspection.js";
 import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
+import WorkOrder from "../models/WorkOrder.js";
 import { recordAudit } from "../services/audit.js";
 
 const router = express.Router();
@@ -64,6 +65,20 @@ router.post("/:id/send", async (req, res, next) => {
     const message = `Hello ${inspection.customer.name}, your digital vehicle inspection from Yeros Auto Services is ready: ${url}`;
     const phone = String(inspection.customer.phone || "").replace(/\D/g, "");
     res.json({ inspection, publicUrl: url, whatsappUrl: phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : "" });
+  } catch (error) { next(error); }
+});
+
+router.post("/:id/convert", async (req, res, next) => {
+  try {
+    const inspection = await Inspection.findById(req.params.id);
+    if (!inspection) return res.status(404).json({ message: "Inspection not found" });
+    if (inspection.convertedWorkOrder) return res.status(409).json({ message: "This inspection was already converted" });
+    const recommendations = inspection.recommendedServices.length ? inspection.recommendedServices : inspection.items.filter((item) => ["attention", "urgent"].includes(item.condition)).map((item) => `${item.label}${item.notes ? ` - ${item.notes}` : ""}`);
+    if (!recommendations.length) return res.status(400).json({ message: "Add a recommendation or mark an item attention/urgent first" });
+    const order = await WorkOrder.create({ customer: inspection.customer, vehicle: inspection.vehicle, sourceInspection: inspection._id, workflowStage: "waiting_approval", services: recommendations.map((description) => ({ description, quantity: 1, price: 0, cost: 0 })), notes: `Created from inspection ${inspection.inspectionNumber}` });
+    inspection.convertedWorkOrder = order._id; await inspection.save();
+    await recordAudit(req, "convert", "Inspection", inspection, `Converted ${inspection.inspectionNumber} to ${order.orderNumber}`);
+    res.status(201).json(order);
   } catch (error) { next(error); }
 });
 

@@ -5,7 +5,7 @@ import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const emptyForm = { sku: "", name: "", category: "General", supplier: "", supplierPhone: "", quantity: 0, minimumStock: 2, cost: 0, salePrice: 0, location: "" };
+const emptyForm = { sku: "", barcode: "", name: "", category: "General", supplier: "", supplierPhone: "", quantity: 0, reservedQuantity: 0, minimumStock: 2, cost: 0, salePrice: 0, location: "" };
 
 export default function Inventory() {
   const [data, setData] = useState(null);
@@ -72,7 +72,7 @@ export default function Inventory() {
         <article><DollarSign /><span>Potential sales</span><strong>{money.format(data.summary.potentialRevenue || 0)}</strong></article>
       </section>
       <form className="module-toolbar" onSubmit={(event) => { event.preventDefault(); setPage(1); setQuery(search); }}>
-        <label><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Part, SKU or supplier" /></label>
+        <label><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Part, SKU, barcode or supplier" /></label>
         <button className="button secondary">Search</button>
       </form>
       <section className="solid-table-card">
@@ -91,6 +91,7 @@ export default function Inventory() {
     {open && <Modal title={editing ? "Edit part" : "Add inventory part"} onClose={() => setOpen(false)}>
       <form className="form-grid" onSubmit={save}>
         <label>SKU<input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required /></label>
+        <label>Barcode<input inputMode="numeric" value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} placeholder="Scan or enter UPC" /></label>
         <label>Part name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
         <label>Category<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
         <label>Supplier<input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} /></label>

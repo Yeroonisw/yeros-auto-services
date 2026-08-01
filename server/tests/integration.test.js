@@ -13,6 +13,7 @@ let vehicle;
 let order;
 let estimate;
 let scannerReport;
+let inventoryPart;
 
 function createPdfBuffer(lines) {
   return new Promise((resolve) => {
@@ -431,6 +432,7 @@ test("inventory tracks stock, margins and parts used by an order", async () => {
     .send({ sku: "PAD-001", name: "Front brake pads", supplier: "Test Parts", quantity: 4, minimumStock: 2, cost: 35, salePrice: 75 })
     .expect(201);
   assert.equal(created.body.unitProfit, 40);
+  inventoryPart = created.body;
 
   const used = await request(app)
     .post(`/api/inventory/${created.body._id}/use`)
@@ -554,6 +556,26 @@ test("customer portal issues access, shows records and accepts login", async () 
   assert.equal(account.body.customer.name, "Updated Customer");
   assert.equal(account.body.vehicles.length, 1);
   assert.ok(account.body.inspections.length > 0);
+});
+
+test("workshop, purchasing, reports and marketing suite share live business data", async () => {
+  await request(app).put(`/api/workshop/${order._id}/stage`).set("Authorization", `Bearer ${token}`).send({ stage: "waiting_parts" }).expect(200);
+  const board = await request(app).get("/api/workshop").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.ok(board.body.columns.waiting_parts.some((item) => item._id === order._id));
+
+  const purchase = await request(app).post("/api/purchases").set("Authorization", `Bearer ${token}`).send({ supplier: "Test Parts", status: "ordered", items: [{ part: inventoryPart._id, quantity: 2, cost: 30 }] }).expect(201);
+  assert.equal(purchase.body.total, 60);
+  const received = await request(app).post(`/api/purchases/${purchase.body._id}/receive`).set("Authorization", `Bearer ${token}`).send({}).expect(200);
+  assert.equal(received.body.status, "received");
+
+  const report = await request(app).get("/api/reports/summary").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.ok(report.body.completedOrders >= 1);
+  await request(app).get("/api/reports/transactions.csv").set("Authorization", `Bearer ${token}`).expect("Content-Type", /text\/csv/).expect(200);
+
+  const offer = await request(app).post("/api/marketing/offers").set("Authorization", `Bearer ${token}`).send({ code: "BRAKES10", title: "Brake service", discountValue: 10 }).expect(201);
+  assert.equal(offer.body.code, "BRAKES10");
+  const marketing = await request(app).get("/api/marketing").set("Authorization", `Bearer ${token}`).expect(200);
+  assert.equal(marketing.body.summary.activeOffers, 1);
 });
 
 test("mechanic assignments, timers and compensation work", async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Check, MessageCircle, Save, Send, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Camera, Check, MessageCircle, Save, Wrench, TriangleAlert } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -34,12 +34,16 @@ export default function InspectionDetail() {
   async function send() {
     try { await save(); const { data } = await api.post(`/inspections/${id}/send`); setInspection(data.inspection); if (data.whatsappUrl) window.open(data.whatsappUrl, "_blank", "noopener,noreferrer"); else setMessage(`Customer link: ${data.publicUrl}`); } catch (requestError) { setError(errorMessage(requestError)); }
   }
+  async function convert() {
+    try { const { data } = await api.post(`/inspections/${id}/convert`); setMessage(`Work order ${data.orderNumber} created and waiting for approval.`); setInspection({ ...inspection, convertedWorkOrder: data._id }); }
+    catch (requestError) { setError(errorMessage(requestError)); }
+  }
   if (!inspection) return <div className="page"><Alert message={error} /><Loading /></div>;
   return <div className="page business-module inspection-detail">
     <Alert message={error} onClose={() => setError("")} />{message && <div className="success-banner"><Check />{message}</div>}
     <Link className="back-link" to="/inspections"><ArrowLeft />Inspections</Link>
     <header className="module-hero"><div><span className="eyebrow">{inspection.inspectionNumber}</span><h1>{inspection.vehicle?.year} {inspection.vehicle?.make} {inspection.vehicle?.model}</h1><p>{inspection.customer?.name} · {Number(inspection.mileage || 0).toLocaleString()} miles</p></div><div className="inspection-actions"><button className="button secondary" onClick={save}><Save />Save</button><button className="button primary" onClick={send}><MessageCircle />Send to customer</button></div></header>
     <div className="inspection-checklist">{inspection.items.map((item, index) => <article className={item.condition} key={item._id || `${item.category}-${item.label}`}><div><small>{item.category}</small><h2>{item.label}</h2></div><div className="condition-buttons">{conditions.map(([value, label]) => <button className={item.condition === value ? "active" : ""} onClick={() => updateItem(index, { condition: value })} key={value}>{value === "urgent" && <TriangleAlert />}{label}</button>)}</div><textarea value={item.notes || ""} onChange={(e) => updateItem(index, { notes: e.target.value })} placeholder="Inspection notes..." /><label className="inspection-photo"><Camera />{item.photoUrl ? "Replace photo" : "Add photo"}<input type="file" accept="image/*" capture="environment" hidden onChange={(e) => e.target.files[0] && upload(index, e.target.files[0])} /></label>{item.photoUrl && <img src={item.photoUrl} alt={item.label} />}</article>)}</div>
-    <section className="solid-panel inspection-summary"><h2>Customer summary</h2><textarea rows="4" value={inspection.summary || ""} onChange={(e) => setInspection({ ...inspection, summary: e.target.value })} placeholder="Explain the overall vehicle condition and recommended next steps." /><button className="button primary" onClick={save}><Save />Save inspection</button></section>
+    <section className="solid-panel inspection-summary"><h2>Customer summary</h2><textarea rows="4" value={inspection.summary || ""} onChange={(e) => setInspection({ ...inspection, summary: e.target.value })} placeholder="Explain the overall vehicle condition and recommended next steps." /><div className="form-actions"><button className="button secondary" onClick={save}><Save />Save inspection</button><button className="button primary" onClick={convert} disabled={Boolean(inspection.convertedWorkOrder)}><Wrench />{inspection.convertedWorkOrder ? "Work order created" : "Convert recommendations"}</button></div></section>
   </div>;
 }
