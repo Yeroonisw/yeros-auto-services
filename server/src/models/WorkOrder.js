@@ -41,6 +41,16 @@ const workOrderSchema = new mongoose.Schema(
       }],
       default: [],
     },
+    workflowStage: {
+      type: String,
+      enum: ["scheduled", "check_in", "diagnosing", "waiting_approval", "waiting_parts", "ready_to_start", "working", "quality_check", "ready_pickup", "delivered"],
+      default: "check_in",
+      index: true,
+    },
+    estimatedMinutes: { type: Number, min: 0, default: 60 },
+    promisedAt: Date,
+    startedAt: Date,
+    qualityCheckedAt: Date,
     dtcCodes: { type: [dtcSchema], default: [] },
     labor: { type: Number, min: 0, default: 0 },
     taxRate: { type: Number, min: 0, max: 100, default: 0 },
@@ -57,6 +67,7 @@ const workOrderSchema = new mongoose.Schema(
     openedAt: { type: Date, default: Date.now },
     completedAt: Date,
     sourceEstimate: { type: mongoose.Schema.Types.ObjectId, ref: "Estimate" },
+    sourceInspection: { type: mongoose.Schema.Types.ObjectId, ref: "Inspection" },
     assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     paymentStatus: { type: String, enum: ["unpaid", "partial", "paid", "refunded"], default: "unpaid" },
   },
@@ -100,6 +111,7 @@ workOrderSchema.pre("validate", async function assignOrderNumber(next) {
 });
 
 workOrderSchema.index({ status: 1, openedAt: 1 });
+workOrderSchema.index({ workflowStage: 1, promisedAt: 1 });
 workOrderSchema.index({ customer: 1, completedAt: -1 });
 workOrderSchema.index({ vehicle: 1, completedAt: -1 });
 workOrderSchema.index({ completedAt: -1 });

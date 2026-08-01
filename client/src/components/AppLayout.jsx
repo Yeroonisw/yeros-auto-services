@@ -20,6 +20,10 @@ const pageNames = {
   inspections: ["Inspections", "Digital vehicle condition reports"],
   finance: ["Financial control", "Sales, expenses and real net profit"],
   technicians: ["Mechanics & time", "Assignments, hours and productivity"],
+  workshop: ["Workshop board", "Live repair flow and bottlenecks"],
+  "purchase-orders": ["Purchase orders", "Suppliers, deliveries and receiving"],
+  reports: ["Reports & exports", "Accounting-ready business data"],
+  marketing: ["Marketing & reviews", "Retention, reputation and offers"],
 };
 
 export default function AppLayout() {
@@ -39,6 +43,11 @@ export default function AppLayout() {
     await installPrompt.prompt();
     setInstallPrompt(null);
   }
+  async function enableNotifications() {
+    if (!("Notification" in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") new Notification("Yeros notifications enabled", { body: "You can now receive shop alerts on this device.", icon: "/yeros-auto-logo.png" });
+  }
 
   return (
     <div className="app-shell admin-v2 fresh-admin">
@@ -56,6 +65,7 @@ export default function AppLayout() {
           </div>
           <GlobalSearch />
           {installPrompt && <button className="header-install-button" onClick={installApp}><Download />Install app</button>}
+          {"Notification" in window && Notification.permission === "default" && <button className="header-install-button" onClick={enableNotifications}>Enable alerts</button>}
           <div className="header-quick-wrap">
             <button className="header-quick-button" onClick={() => setQuickOpen(!quickOpen)} aria-expanded={quickOpen}>
               <Plus size={17} /> <span>Quick create</span>

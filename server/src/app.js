@@ -23,6 +23,10 @@ import publicInspectionRoutes from "./routes/publicInspections.js";
 import financeRoutes from "./routes/finance.js";
 import technicianRoutes from "./routes/technicians.js";
 import portalRoutes from "./routes/portal.js";
+import workshopRoutes from "./routes/workshop.js";
+import purchaseRoutes from "./routes/purchases.js";
+import reportRoutes from "./routes/reports.js";
+import marketingRoutes from "./routes/marketing.js";
 import { requireAuth, requirePermission } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errors.js";
 
@@ -55,6 +59,10 @@ export function createApp() {
   app.use("/api/inspections", requireAuth, requirePermission("inspections"), inspectionRoutes);
   app.use("/api/finance", requireAuth, requirePermission("finance"), financeRoutes);
   app.use("/api/technicians", requireAuth, requirePermission("technicians"), technicianRoutes);
+  app.use("/api/workshop", requireAuth, requirePermission("work_orders"), workshopRoutes);
+  app.use("/api/purchases", requireAuth, requirePermission("inventory"), purchaseRoutes);
+  app.use("/api/reports", requireAuth, requirePermission("finance"), reportRoutes);
+  app.use("/api/marketing", requireAuth, requirePermission("customers"), marketingRoutes);
 
   if (process.env.NODE_ENV === "production" && fs.existsSync(clientIndexPath)) {
     app.use(express.static(clientDistPath));

@@ -33,6 +33,10 @@ const PublicInspection = lazy(() => import("./pages/PublicInspection.jsx"));
 const Finance = lazy(() => import("./pages/Finance.jsx"));
 const Technicians = lazy(() => import("./pages/Technicians.jsx"));
 const CustomerPortal = lazy(() => import("./pages/CustomerPortal.jsx"));
+const WorkshopBoard = lazy(() => import("./pages/WorkshopBoard.jsx"));
+const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders.jsx"));
+const Reports = lazy(() => import("./pages/Reports.jsx"));
+const Marketing = lazy(() => import("./pages/Marketing.jsx"));
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -102,6 +106,10 @@ export default function App() {
           <Route path="/inspections/:id" element={<InspectionDetail />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/technicians" element={<Technicians />} />
+          <Route path="/workshop" element={<WorkshopBoard />} />
+          <Route path="/purchase-orders" element={<PurchaseOrders />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/marketing" element={<Marketing />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/manuals" element={<Manuals />} />
           <Route path="/search" element={<SearchResults />} />

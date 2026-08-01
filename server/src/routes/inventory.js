@@ -15,6 +15,7 @@ router.get("/", async (req, res, next) => {
       ...(search ? { $or: [
         { name: { $regex: search, $options: "i" } },
         { sku: { $regex: search, $options: "i" } },
+        { barcode: { $regex: search, $options: "i" } },
         { supplier: { $regex: search, $options: "i" } },
       ] } : {}),
     };
@@ -92,6 +93,20 @@ router.post("/:id/use", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+router.post("/:id/reserve", async (req, res, next) => {
+  try {
+    const amount = Number(req.body.amount || 0);
+    const part = await Part.findById(req.params.id);
+    if (!part) return res.status(404).json({ message: "Part not found" });
+    const nextReserved = Number(part.reservedQuantity || 0) + amount;
+    if (!Number.isFinite(amount) || nextReserved < 0 || nextReserved > part.quantity) return res.status(400).json({ message: "Reservation exceeds available inventory" });
+    part.reservedQuantity = nextReserved;
+    await part.save();
+    await recordAudit(req, "stock_reservation", "Part", part, `${amount > 0 ? "Reserved" : "Released"} ${Math.abs(amount)} ${part.name}`);
+    res.json(part);
+  } catch (error) { next(error); }
 });
 
 router.delete("/:id", async (req, res, next) => {
