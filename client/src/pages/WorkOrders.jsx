@@ -4,6 +4,7 @@ import Modal from "../components/Modal.jsx";
 import { Alert, Empty, Loading } from "../components/PageState.jsx";
 import { useNavigate } from "react-router-dom";
 import { appendReceiptLines, previewReceipt } from "../receiptReader.js";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const labels = { pending: "Pending", in_progress: "In progress", completed: "Completed", cancelled: "Cancelled" };
@@ -28,16 +29,28 @@ export default function WorkOrders() {
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [readingReceipt, setReadingReceipt] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [status, setStatus] = useState("");
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
 
-  async function load() {
+  async function loadOrders() {
     setLoading(true);
     try {
-      const [{ data: orderData }, { data: customerData }, { data: vehicleData }] = await Promise.all([api.get("/work-orders"), api.get("/customers"), api.get("/vehicles")]);
-      setOrders(orderData); setCustomers(customerData); setVehicles(vehicleData);
+      const { data } = await api.get("/work-orders", { params: { page, limit: 25, status: status || undefined, search: query || undefined } });
+      setOrders(data.items); setPagination(data.pagination);
     } catch (requestError) { setError(errorMessage(requestError)); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+  async function loadReferences() {
+    try {
+      const [{ data: customerData }, { data: vehicleData }] = await Promise.all([api.get("/customers"), api.get("/vehicles")]);
+      setCustomers(customerData); setVehicles(vehicleData);
+    } catch (requestError) { setError(errorMessage(requestError)); }
+  }
+  useEffect(() => { loadReferences(); }, []);
+  useEffect(() => { loadOrders(); }, [page, status, query]);
 
   const customerVehicles = useMemo(() => vehicles.filter((vehicle) => (vehicle.customer?._id || vehicle.customer) === form.customer), [vehicles, form.customer]);
   const subtotal = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0), [form]);
@@ -131,14 +144,14 @@ export default function WorkOrders() {
       };
       if (editing) await api.put(`/work-orders/${editing._id}`, payload);
       else await api.post("/work-orders", payload);
-      setModalOpen(false); await load();
+      setModalOpen(false); await Promise.all([loadOrders(), loadReferences()]);
     } catch (requestError) { setError(errorMessage(requestError)); }
     finally { setSaving(false); }
   }
 
   async function remove(order) {
     if (!window.confirm(`Delete work order ${order.orderNumber}?`)) return;
-    try { await api.delete(`/work-orders/${order._id}`); await load(); }
+    try { await api.delete(`/work-orders/${order._id}`); await loadOrders(); }
     catch (requestError) { setError(errorMessage(requestError)); }
   }
 
@@ -150,6 +163,11 @@ export default function WorkOrders() {
       </div>
       {(!customers.length || !vehicles.length) && !loading && <Alert message="Add at least one customer and vehicle before creating a work order." onClose={() => {}} />}
       <Alert message={error} onClose={() => setError("")} />
+      <form className="module-toolbar order-toolbar" onSubmit={(event) => { event.preventDefault(); setPage(1); setQuery(search.trim()); }}>
+        <label><Search /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search order, service or notes" /></label>
+        <select aria-label="Filter by status" value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }}><option value="">All statuses</option>{Object.entries(labels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select>
+        <button className="button secondary">Search</button>
+      </form>
       <section className="panel">
         {loading ? <Loading /> : orders.length ? <div className="table-wrap"><table>
           <thead><tr><th>Order</th><th>Customer / Vehicle</th><th>Status</th><th>Opened</th><th>Total</th><th className="actions">Actions</th></tr></thead>
@@ -160,7 +178,8 @@ export default function WorkOrders() {
             <td>{new Date(order.openedAt).toLocaleDateString()}</td><td><strong>{money.format(order.total || 0)}</strong></td>
             <td className="actions"><button className="text-button view-button" onClick={() => navigate(`/work-orders/${order._id}`)}>View</button><button className="text-button" onClick={() => downloadInvoice(order)}>PDF</button><button className="text-button" onClick={() => open(order)}>Edit</button><button className="text-button danger" onClick={() => remove(order)}>Delete</button></td>
           </tr>)}</tbody>
-        </table></div> : <Empty>No work orders yet. Create one when a vehicle is ready for service.</Empty>}
+        </table></div> : <Empty>No work orders match this view.</Empty>}
+        {!loading && <div className="pagination"><span>{pagination.total} work orders · Page {pagination.page} of {pagination.pages}</span><div><button onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} aria-label="Previous page"><ChevronLeft /></button><button onClick={() => setPage((value) => Math.min(pagination.pages, value + 1))} disabled={page >= pagination.pages} aria-label="Next page"><ChevronRight /></button></div></div>}
       </section>
       {modalOpen && <Modal title={editing ? `Edit ${editing.orderNumber}` : "New work order"} onClose={() => setModalOpen(false)} wide>
         <form className="form-grid" onSubmit={submit}>

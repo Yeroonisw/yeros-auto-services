@@ -11,6 +11,10 @@ const populate = [
   { path: "vehicle", select: "year make model engine plate vin customer" },
 ];
 
+function escapedRegex(value) {
+  return new RegExp(String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+}
+
 async function validateRelations(body) {
   const [customer, vehicle] = await Promise.all([
     Customer.findById(body.customer),
@@ -69,8 +73,19 @@ async function syncVehicleFromWorkOrder(order) {
 
 router.get("/", async (req, res, next) => {
   try {
-    const filter = req.query.status ? { status: req.query.status } : {};
-    res.json(await WorkOrder.find(filter).populate(populate).sort({ createdAt: -1 }));
+    const search = String(req.query.search || "").trim();
+    const filter = {
+      ...(req.query.status ? { status: req.query.status } : {}),
+      ...(search ? { $or: [{ orderNumber: escapedRegex(search) }, { notes: escapedRegex(search) }, { "services.description": escapedRegex(search) }] } : {}),
+    };
+    if (!req.query.page) return res.json(await WorkOrder.find(filter).populate(populate).sort({ createdAt: -1 }));
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.min(100, Math.max(10, Number(req.query.limit || 25)));
+    const [items, total] = await Promise.all([
+      WorkOrder.find(filter).populate(populate).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit),
+      WorkOrder.countDocuments(filter),
+    ]);
+    res.json({ items, pagination: { page, limit, total, pages: Math.max(1, Math.ceil(total / limit)) } });
   } catch (error) {
     next(error);
   }

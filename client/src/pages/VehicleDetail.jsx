@@ -95,7 +95,7 @@ export default function VehicleDetail() {
       </section>
       <section className="solid-panel vehicle-files">
         <header><Camera /><div><h2>Photos & files</h2><p>Vehicle photos, receipts, scanner reports and documents. Images are compressed before upload.</p></div><label className="button secondary"><FileUp />{uploading ? "Uploading..." : "Add file"}<input type="file" accept="image/*,.pdf" onChange={upload} disabled={uploading} hidden /></label></header>
-        {data.vehicle.attachments?.length ? <div className="attachment-grid">{data.vehicle.attachments.map((file) => <a key={file._id} href={file.url} target="_blank" rel="noreferrer">{file.kind === "photo" ? <img src={file.url} alt={file.name} /> : <FileUp />}<strong>{file.name}</strong><span>{file.kind}</span></a>)}</div> : <Empty>No photos or files uploaded yet.</Empty>}
+        {data.vehicle.attachments?.length ? <div className="attachment-grid">{data.vehicle.attachments.map((file) => <a key={file._id} href={file.url} target="_blank" rel="noreferrer">{file.kind === "photo" ? <img src={file.url} alt={file.name} loading="lazy" decoding="async" /> : <FileUp />}<strong>{file.name}</strong><span>{file.kind}</span></a>)}</div> : <Empty>No photos or files uploaded yet.</Empty>}
       </section>
       <section className="panel profile-section">
         <div className="panel-heading"><h2>Oil change history</h2><p>Every oil change saved from work orders.</p></div>

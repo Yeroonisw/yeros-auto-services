@@ -1,4 +1,4 @@
-const CACHE = "yeros-workspace-v2";
+const CACHE = "yeros-workspace-v3";
 const SHELL = ["/", "/login", "/portal", "/manifest.json", "/yeros-auto-logo.png"];
 
 self.addEventListener("install", (event) => {
@@ -13,9 +13,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || new URL(event.request.url).pathname.startsWith("/api/")) return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
   event.respondWith(fetch(event.request).then((response) => {
-    const copy = response.clone();
-    caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+    if (response.ok && response.type === "basic") {
+      const copy = response.clone();
+      caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+    }
     return response;
   }).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/"))));
 });
