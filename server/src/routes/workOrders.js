@@ -8,7 +8,8 @@ import { recordAudit } from "../services/audit.js";
 const router = express.Router();
 const populate = [
   { path: "customer", select: "name phone email" },
-  { path: "vehicle", select: "year make model engine plate vin customer" },
+  { path: "vehicle", select: "year make model engine plate vin mileage customer" },
+  { path: "assignedTechnician", select: "name" },
 ];
 
 function escapedRegex(value) {

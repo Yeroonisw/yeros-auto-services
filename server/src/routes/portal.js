@@ -64,7 +64,7 @@ router.post("/appointments", requirePortal, async (req, res, next) => {
 
 router.get("/orders/:id/invoice", requirePortal, async (req, res, next) => {
   try {
-    const order = await WorkOrder.findOne({ _id: req.params.id, customer: req.customer._id }).populate("customer", "name phone email").populate("vehicle", "year make model vin plate");
+    const order = await WorkOrder.findOne({ _id: req.params.id, customer: req.customer._id }).populate("customer", "name phone email").populate("vehicle", "year make model engine vin plate mileage");
     if (!order) return res.status(404).json({ message: "Invoice not found" });
     streamDocument(res, order, { title: "INVOICE", number: order.orderNumber, date: order.completedAt || order.createdAt, status: order.status.toUpperCase(), filename: `Invoice-${order.orderNumber}.pdf`, includeInvoiceDetails: true });
   } catch (error) { next(error); }
