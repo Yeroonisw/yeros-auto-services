@@ -4,7 +4,7 @@ import {
   ArrowUpRight, BellRing, CalendarDays, CarFront, CheckCircle2, ChevronRight,
   CircleDollarSign, ClipboardList, Clock3, FilePlus2, FileText, Plus, Sparkles,
   TrendingDown, TrendingUp, UserPlus, UsersRound, Wrench,
-  AlertTriangle, BarChart3, CalendarCheck2, PackageSearch, RefreshCw, UserCheck,
+  AlertTriangle, BarChart3, CalendarCheck2, RefreshCw, UserCheck,
 } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -143,9 +143,6 @@ export default function Dashboard() {
           </Link>)}
           {data?.overdueOrders?.slice(0, 3).map((item) => <Link to={`/work-orders/${item._id}`} key={item._id}>
             <span className="priority-icon overdue"><AlertTriangle /></span><div><strong>{item.orderNumber}</strong><small>{item.customer?.name} · Order overdue</small></div><ChevronRight />
-          </Link>)}
-          {data?.lowStock?.slice(0, 2).map((item) => <Link to="/inventory" key={item._id}>
-            <span className="priority-icon estimate"><PackageSearch /></span><div><strong>{item.name}</strong><small>{item.quantity} left · reorder at {item.minimumStock}</small></div><ChevronRight />
           </Link>)}
           {!reminders.total && <div className="all-clear"><CheckCircle2 /><strong>All clear</strong><span>No follow-ups need attention.</span></div>}</div>
         </section>

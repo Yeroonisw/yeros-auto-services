@@ -23,18 +23,12 @@ const ScannerReports = lazy(() => import("./pages/ScannerReports.jsx"));
 const ScannerReportDetail = lazy(() => import("./pages/ScannerReportDetail.jsx"));
 const AutelImport = lazy(() => import("./pages/AutelImport.jsx"));
 const AutelLive = lazy(() => import("./pages/AutelLive.jsx"));
-const Inventory = lazy(() => import("./pages/Inventory.jsx"));
 const Reminders = lazy(() => import("./pages/Reminders.jsx"));
 const Security = lazy(() => import("./pages/Security.jsx"));
 const CalendarPro = lazy(() => import("./pages/CalendarPro.jsx"));
-const Inspections = lazy(() => import("./pages/Inspections.jsx"));
-const InspectionDetail = lazy(() => import("./pages/InspectionDetail.jsx"));
-const PublicInspection = lazy(() => import("./pages/PublicInspection.jsx"));
 const Finance = lazy(() => import("./pages/Finance.jsx"));
 const Technicians = lazy(() => import("./pages/Technicians.jsx"));
 const CustomerPortal = lazy(() => import("./pages/CustomerPortal.jsx"));
-const WorkshopBoard = lazy(() => import("./pages/WorkshopBoard.jsx"));
-const PurchaseOrders = lazy(() => import("./pages/PurchaseOrders.jsx"));
 const Reports = lazy(() => import("./pages/Reports.jsx"));
 const Marketing = lazy(() => import("./pages/Marketing.jsx"));
 
@@ -81,7 +75,6 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/portal" element={<CustomerPortal />} />
-      <Route path="/inspection/:token" element={<PublicInspection />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -100,14 +93,9 @@ export default function App() {
           <Route path="/appointments/:id" element={<AppointmentDetail />} />
           <Route path="/calendar" element={<CalendarPro />} />
           <Route path="/reminders" element={<Reminders />} />
-          <Route path="/inventory" element={<Inventory />} />
           <Route path="/security" element={<Security />} />
-          <Route path="/inspections" element={<Inspections />} />
-          <Route path="/inspections/:id" element={<InspectionDetail />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/technicians" element={<Technicians />} />
-          <Route path="/workshop" element={<WorkshopBoard />} />
-          <Route path="/purchase-orders" element={<PurchaseOrders />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/assistant" element={<Assistant />} />

@@ -264,10 +264,6 @@ export default function WorkOrderDetail() {
             </div>
             {order.oilChange.notes && <p className="detail-notes">{order.oilChange.notes}</p>}
           </section>}
-          {order.partsUsed?.length > 0 && <section className="panel detail-section">
-            <div className="panel-heading"><h2>Inventory parts used</h2><p>Stock assigned directly to this order.</p></div>
-            <div className="finance-breakdown">{order.partsUsed.map((part, index) => <div key={`${part.part}-${index}`}><span>{part.quantity}× {part.name}<small>{part.sku || "No SKU"}</small></span><strong>{money.format((part.salePrice - part.cost) * part.quantity)} profit</strong></div>)}</div>
-          </section>}
           <section className="panel internal-finance">
             <div className="panel-heading"><h2>Internal profitability</h2><p>Not shown on the customer invoice.</p></div>
             <div className="finance-breakdown">

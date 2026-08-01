@@ -6,7 +6,6 @@ import Vehicle from "../models/Vehicle.js";
 import WorkOrder from "../models/WorkOrder.js";
 import Estimate from "../models/Estimate.js";
 import Appointment from "../models/Appointment.js";
-import Inspection from "../models/Inspection.js";
 import Payment from "../models/Payment.js";
 import { streamDocument } from "../services/pdf.js";
 
@@ -43,15 +42,14 @@ router.post("/login", async (req, res, next) => {
 router.get("/account", requirePortal, async (req, res, next) => {
   try {
     const customer = req.customer;
-    const [vehicles, orders, estimates, appointments, inspections, payments] = await Promise.all([
+    const [vehicles, orders, estimates, appointments, payments] = await Promise.all([
       Vehicle.find({ customer: customer._id }).select("year make model vin plate mileage oilChange"),
       WorkOrder.find({ customer: customer._id }).populate("vehicle", "year make model").select("orderNumber vehicle status workflowStage services openedAt completedAt paymentStatus promisedAt"),
       Estimate.find({ customer: customer._id }).populate("vehicle", "year make model").sort({ createdAt: -1 }),
       Appointment.find({ customer: customer._id }).populate("vehicle", "year make model").sort({ scheduledAt: -1 }),
-      Inspection.find({ customer: customer._id }).populate("vehicle", "year make model").select("-publicToken").sort({ createdAt: -1 }),
       Payment.find({ customer: customer._id }).populate("workOrder", "orderNumber").sort({ createdAt: -1 }),
     ]);
-    res.json({ customer: { name: customer.name, phone: customer.phone, email: customer.email, address: customer.address }, vehicles, orders, estimates, appointments, inspections, payments });
+    res.json({ customer: { name: customer.name, phone: customer.phone, email: customer.email, address: customer.address }, vehicles, orders, estimates, appointments, payments });
   } catch (error) { next(error); }
 });
 

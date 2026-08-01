@@ -13,7 +13,6 @@ let vehicle;
 let order;
 let estimate;
 let scannerReport;
-let inventoryPart;
 
 function createPdfBuffer(lines) {
   return new Promise((resolve) => {
@@ -436,32 +435,6 @@ test("dashboard reflects stored records", async () => {
   assert.ok(response.body.customerSegments);
 });
 
-test("inventory tracks stock, margins and parts used by an order", async () => {
-  const created = await request(app)
-    .post("/api/inventory")
-    .set("Authorization", `Bearer ${token}`)
-    .send({ sku: "PAD-001", name: "Front brake pads", supplier: "Test Parts", quantity: 4, minimumStock: 2, cost: 35, salePrice: 75 })
-    .expect(201);
-  assert.equal(created.body.unitProfit, 40);
-  inventoryPart = created.body;
-
-  const used = await request(app)
-    .post(`/api/inventory/${created.body._id}/use`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({ workOrder: order._id, quantity: 1 })
-    .expect(200);
-  assert.equal(used.body.part.quantity, 3);
-  assert.equal(used.body.order.partsUsed[0].name, "Front brake pads");
-
-  const list = await request(app)
-    .get("/api/inventory?page=1&limit=10")
-    .set("Authorization", `Bearer ${token}`)
-    .expect(200);
-  assert.equal(list.body.items.length, 1);
-  assert.equal(list.body.pagination.total, 1);
-  assert.equal(list.body.summary.units, 3);
-});
-
 test("customer interactions and reminder queue are persistent", async () => {
   const interaction = await request(app)
     .post(`/api/customers/${customer._id}/interactions`)
@@ -504,35 +477,6 @@ test("security center exposes users, audit and safe backups", async () => {
   assert.equal(backup.body.data.users, undefined);
 });
 
-test("digital inspections support photos, public review and signature decisions", async () => {
-  const created = await request(app)
-    .post("/api/inspections")
-    .set("Authorization", `Bearer ${token}`)
-    .send({ customer: customer._id, vehicle: vehicle._id, mileage: 26200 })
-    .expect(201);
-  assert.equal(created.body.items.length, 12);
-  assert.equal(created.body.inspectionNumber, "INS-00001");
-
-  const updated = await request(app)
-    .put(`/api/inspections/${created.body._id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({ items: created.body.items.map((item, index) => ({ ...item, condition: index === 0 ? "urgent" : "good", notes: index === 0 ? "Pads need replacement" : "" })), summary: "Brake service recommended" })
-    .expect(200);
-  assert.equal(updated.body.items[0].condition, "urgent");
-
-  const sent = await request(app)
-    .post(`/api/inspections/${created.body._id}/send`)
-    .set("Authorization", `Bearer ${token}`)
-    .expect(200);
-  const publicView = await request(app).get(`/api/public/inspections/${sent.body.inspection.publicToken}`).expect(200);
-  assert.equal(publicView.body.summary, "Brake service recommended");
-  const decision = await request(app)
-    .post(`/api/public/inspections/${sent.body.inspection.publicToken}/decision`)
-    .send({ decision: "approved", signature: "Test Customer" })
-    .expect(200);
-  assert.equal(decision.body.status, "approved");
-});
-
 test("finance records operating expenses, payments and net profit", async () => {
   await request(app)
     .post("/api/finance/expenses")
@@ -566,20 +510,10 @@ test("customer portal issues access, shows records and accepts login", async () 
     .expect(200);
   assert.equal(account.body.customer.name, "Updated Customer");
   assert.equal(account.body.vehicles.length, 1);
-  assert.ok(account.body.inspections.length > 0);
+  assert.equal(account.body.inspections, undefined);
 });
 
-test("workshop, purchasing, reports and marketing suite share live business data", async () => {
-  await request(app).put(`/api/workshop/${order._id}/stage`).set("Authorization", `Bearer ${token}`).send({ stage: "waiting_parts" }).expect(200);
-  const board = await request(app).get("/api/workshop").set("Authorization", `Bearer ${token}`).expect(200);
-  assert.ok(board.body.columns.waiting_parts.some((item) => item._id === order._id));
-
-  const purchase = await request(app).post("/api/purchases").set("Authorization", `Bearer ${token}`).send({ supplier: "Test Parts", status: "ordered", items: [{ part: inventoryPart._id, quantity: 2, cost: 30 }] }).expect(201);
-  assert.equal(purchase.body.total, 60);
-  const received = await request(app).post(`/api/purchases/${purchase.body._id}/receive`).set("Authorization", `Bearer ${token}`).send({}).expect(200);
-  assert.equal(received.body.status, "received");
-
-  await request(app).put(`/api/work-orders/${order._id}`).set("Authorization", `Bearer ${token}`).send({ status: "completed" }).expect(200);
+test("reports and marketing share live business data", async () => {
   const report = await request(app).get("/api/reports/summary").set("Authorization", `Bearer ${token}`).expect(200);
   assert.ok(report.body.completedOrders >= 1);
   await request(app).get("/api/reports/transactions.csv").set("Authorization", `Bearer ${token}`).expect("Content-Type", /text\/csv/).expect(200);
@@ -588,6 +522,12 @@ test("workshop, purchasing, reports and marketing suite share live business data
   assert.equal(offer.body.code, "BRAKES10");
   const marketing = await request(app).get("/api/marketing").set("Authorization", `Bearer ${token}`).expect(200);
   assert.equal(marketing.body.summary.activeOffers, 1);
+});
+
+test("removed modules are no longer exposed", async () => {
+  for (const path of ["/api/workshop", "/api/inventory", "/api/purchases", "/api/inspections", "/api/public/inspections/example"]) {
+    await request(app).get(path).set("Authorization", `Bearer ${token}`).expect(404);
+  }
 });
 
 test("mechanic assignments, timers and compensation work", async () => {

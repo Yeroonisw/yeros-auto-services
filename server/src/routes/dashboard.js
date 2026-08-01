@@ -4,7 +4,6 @@ import Vehicle from "../models/Vehicle.js";
 import WorkOrder from "../models/WorkOrder.js";
 import Appointment from "../models/Appointment.js";
 import Estimate from "../models/Estimate.js";
-import Part from "../models/Part.js";
 import Expense from "../models/Expense.js";
 
 const router = express.Router();
@@ -58,7 +57,7 @@ router.get("/", async (req, res, next) => {
     nextWeek.setDate(nextWeek.getDate() + 7);
     const overdueThreshold = new Date(now.getTime() - 2 * 86400000);
 
-    const [customersList, vehicles, allOrders, recentOrders, upcomingAppointments, appointments, openEstimates, lowStock, operatingExpenses] = await Promise.all([
+    const [customersList, vehicles, allOrders, recentOrders, upcomingAppointments, appointments, openEstimates, operatingExpenses] = await Promise.all([
       Customer.find().select("name phone createdAt").lean(),
       Vehicle.find().populate("customer", "name phone"),
       WorkOrder.find().populate("customer", "name phone"),
@@ -67,7 +66,6 @@ router.get("/", async (req, res, next) => {
         .populate("customer", "name phone").populate("vehicle", "year make model").sort({ scheduledAt: 1 }).limit(10),
       Appointment.find({ scheduledAt: { $gte: monthStart } }).select("status scheduledAt").lean(),
       Estimate.find({ status: { $in: ["draft", "sent"] } }).populate("customer", "name phone").sort({ createdAt: 1 }).limit(20),
-      Part.find({ active: true, $expr: { $lte: ["$quantity", "$minimumStock"] } }).sort({ quantity: 1 }).limit(8),
       Expense.find({ date: { $gte: yearStart } }).lean(),
     ]);
 
@@ -184,8 +182,7 @@ router.get("/", async (req, res, next) => {
       overdueOrders: overdueOrders.slice(0, 8),
       overdueOrderCount: overdueOrders.length,
       customerSegments,
-      lowStock,
-      reminders: { oilChanges: oilReminders, estimates: estimateReminders, total: oilReminders.length + estimateReminders.length + overdueOrders.length + lowStock.length },
+      reminders: { oilChanges: oilReminders, estimates: estimateReminders, total: oilReminders.length + estimateReminders.length + overdueOrders.length },
       cache: { generatedAt: now, ttlSeconds: CACHE_MS / 1000 },
     };
     cache = { at: Date.now(), value };

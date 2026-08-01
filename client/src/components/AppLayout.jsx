@@ -17,11 +17,8 @@ const pageNames = {
   "autel-live": ["Autel live", "Live diagnostic workspace"],
   assistant: ["AI diagnostics", "Diagnostic support assistant"],
   manuals: ["Lemon Manuals", "Repair information workspace"],
-  inspections: ["Inspections", "Digital vehicle condition reports"],
   finance: ["Financial control", "Sales, expenses and real net profit"],
   technicians: ["Mechanics & time", "Assignments, hours and productivity"],
-  workshop: ["Workflow", "Move repairs through the shop"],
-  "purchase-orders": ["Purchase orders", "Suppliers, deliveries and receiving"],
   reports: ["Reports & exports", "Accounting-ready business data"],
   marketing: ["Marketing & reviews", "Retention, reputation and offers"],
 };
