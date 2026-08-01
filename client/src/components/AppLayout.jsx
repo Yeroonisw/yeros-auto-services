@@ -20,7 +20,7 @@ const pageNames = {
   inspections: ["Inspections", "Digital vehicle condition reports"],
   finance: ["Financial control", "Sales, expenses and real net profit"],
   technicians: ["Mechanics & time", "Assignments, hours and productivity"],
-  workshop: ["Workshop board", "Live repair flow and bottlenecks"],
+  workshop: ["Workflow", "Move repairs through the shop"],
   "purchase-orders": ["Purchase orders", "Suppliers, deliveries and receiving"],
   reports: ["Reports & exports", "Accounting-ready business data"],
   marketing: ["Marketing & reviews", "Retention, reputation and offers"],

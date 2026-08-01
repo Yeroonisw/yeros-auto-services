@@ -579,6 +579,7 @@ test("workshop, purchasing, reports and marketing suite share live business data
   const received = await request(app).post(`/api/purchases/${purchase.body._id}/receive`).set("Authorization", `Bearer ${token}`).send({}).expect(200);
   assert.equal(received.body.status, "received");
 
+  await request(app).put(`/api/work-orders/${order._id}`).set("Authorization", `Bearer ${token}`).send({ status: "completed" }).expect(200);
   const report = await request(app).get("/api/reports/summary").set("Authorization", `Bearer ${token}`).expect(200);
   assert.ok(report.body.completedOrders >= 1);
   await request(app).get("/api/reports/transactions.csv").set("Authorization", `Bearer ${token}`).expect("Content-Type", /text\/csv/).expect(200);

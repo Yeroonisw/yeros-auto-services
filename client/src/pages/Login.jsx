@@ -20,7 +20,7 @@ export default function Login() {
   const [recovery, setRecovery] = useState({ email: "", recoveryCode: "", newPassword: "" });
   const [success, setSuccess] = useState("");
 
-  if (authenticated) return <Navigate to="/dashboard" replace />;
+  if (authenticated) return <Navigate to="/workshop" replace />;
 
   async function submit(event) {
     event.preventDefault();
@@ -28,7 +28,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(form.email, form.password, otp);
-      navigate("/dashboard", { replace: true });
+      navigate("/workshop", { replace: true });
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
