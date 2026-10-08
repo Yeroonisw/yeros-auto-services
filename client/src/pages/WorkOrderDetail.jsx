@@ -101,6 +101,7 @@ export default function WorkOrderDetail() {
     if (!form) return 0;
     return form.services.reduce((sum, item) => sum + Number(item.cost || 0), 0);
   }, [form]);
+  const invoiceTotal = subtotal * (1 + Number(form?.taxRate || 0) / 100);
 
   function openEditor() {
     if (order) setForm(orderToForm(order));
