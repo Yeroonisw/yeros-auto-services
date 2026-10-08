@@ -7,7 +7,7 @@ import { recordAudit } from "../services/audit.js";
 
 const router = express.Router();
 const populate = [
-  { path: "customer", select: "name phone email" },
+  { path: "customer", select: "name phone email address" },
   { path: "vehicle", select: "year make model engine plate vin mileage customer" },
   { path: "assignedTechnician", select: "name" },
 ];
