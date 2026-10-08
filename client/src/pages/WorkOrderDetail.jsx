@@ -7,6 +7,12 @@ import { Alert, Loading } from "../components/PageState.jsx";
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const labels = { pending: "Pending", in_progress: "In progress", completed: "Completed", cancelled: "Cancelled" };
 const paymentMethods = ["Pending", "Cash", "Credit / Debit Card", "Zelle", "Cash App", "Check", "Other"];
+const TRAVEL_RATE_PER_MILE = 2.5;
+
+function calculateTravelFee(distanceMilesOneWay, ratePerMile = TRAVEL_RATE_PER_MILE) {
+  const amount = Number(distanceMilesOneWay || 0) * 2 * Number(ratePerMile || 0);
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
+}
 
 function orderToForm(order) {
   return {
@@ -33,6 +39,8 @@ function orderToForm(order) {
       notes: order.oilChange?.notes || "",
     },
     labor: order.labor || 0,
+    travelDistanceMilesOneWay: order.travelDistanceMilesOneWay || 0,
+    travelRatePerMile: order.travelRatePerMile ?? TRAVEL_RATE_PER_MILE,
     taxRate: order.taxRate || 0,
     paymentMethod: order.paymentMethod || "Pending",
     notes: order.notes || "",
@@ -86,7 +94,7 @@ export default function WorkOrderDetail() {
 
   const subtotal = useMemo(() => {
     if (!form) return 0;
-    return form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0);
+    return form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0) + calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile);
   }, [form]);
   const partsCost = useMemo(() => {
     if (!form) return 0;
@@ -205,6 +213,11 @@ export default function WorkOrderDetail() {
               <label className="span-2">Oil/filter notes<input value={form.oilChange.notes} onChange={(event) => setForm({ ...form, oilChange: { ...form.oilChange, notes: event.target.value } })} placeholder="5W-20, filter number, brand..." /></label>
             </div>}
           </div>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Mobile travel</strong><span>Round-trip charge at {money.format(form.travelRatePerMile)} per mile.</span></div>
+            <label>One-way road miles from shop<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(event) => setForm({ ...form, travelDistanceMilesOneWay: Number(event.target.value) })} /></label>
+            <p className="detail-empty">Round trip: {(Number(form.travelDistanceMilesOneWay || 0) * 2).toLocaleString()} mi · Travel charge: {money.format(calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile))}</p>
+          </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(event) => setForm({ ...form, labor: Number(event.target.value) })} /></label>
           <label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(event) => setForm({ ...form, taxRate: Number(event.target.value) })} /></label>
           <label className="span-2">Notes<textarea rows="4" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
@@ -233,7 +246,7 @@ export default function WorkOrderDetail() {
         </div>
       </section>
       <section className="detail-summary-grid">
-        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}</small></article>
+        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}{order.customer?.address && <><br />{order.customer.address}</>}</small></article>
         <article><CarFront /><span>Vehicle</span><strong>{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</strong><small>{order.vehicle?.plate || "No plate"} - {Number(order.vehicle?.mileage || 0).toLocaleString()} mi</small></article>
         <article><Hash /><span>VIN</span><strong>{order.vehicle?.vin || "Not recorded"}</strong><small>{order.vehicle?.color || "Color not recorded"}</small></article>
         <article><CalendarDays /><span>Opened</span><strong>{new Date(order.openedAt).toLocaleDateString()}</strong><small>{order.completedAt ? `Completed ${new Date(order.completedAt).toLocaleDateString()}` : "Not completed"}</small></article>
@@ -247,6 +260,7 @@ export default function WorkOrderDetail() {
               <strong>{service.description}</strong><span>{service.quantity}</span><span>{money.format(service.price)}</span><span>{money.format(service.quantity * service.price)}</span>
             </div>) : <p className="detail-empty">No service lines recorded.</p>}
             {order.labor > 0 && <div className="detail-line labor"><strong>Labor</strong><span /><span /><span>{money.format(order.labor)}</span></div>}
+            {Number(order.travelDistanceMilesOneWay || 0) > 0 && <div className="detail-line labor"><strong>Mobile travel (round trip)</strong><span>{(Number(order.travelDistanceMilesOneWay) * 2).toLocaleString()} mi</span><span>{money.format(order.travelRatePerMile ?? TRAVEL_RATE_PER_MILE)}/mi</span><span>{money.format(order.travelFee ?? calculateTravelFee(order.travelDistanceMilesOneWay, order.travelRatePerMile))}</span></div>}
           </div>
           <div className="detail-totals">
             <div><span>Subtotal</span><strong>{money.format(order.subtotal)}</strong></div>

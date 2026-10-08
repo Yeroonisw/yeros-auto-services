@@ -9,12 +9,18 @@ import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const labels = { pending: "Pending", in_progress: "In progress", completed: "Completed", cancelled: "Cancelled" };
 const paymentMethods = ["Pending", "Cash", "Credit / Debit Card", "Zelle", "Cash App", "Check", "Other"];
+const TRAVEL_RATE_PER_MILE = 2.5;
+
+function calculateTravelFee(distanceMilesOneWay, ratePerMile = TRAVEL_RATE_PER_MILE) {
+  const amount = Number(distanceMilesOneWay || 0) * 2 * Number(ratePerMile || 0);
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
+}
 const blank = {
   customer: "", vehicle: "", status: "pending",
   services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
   dtcCodes: [{ code: "", description: "", status: "active" }],
   oilChange: { performed: false, mileage: 0, serviceDate: new Date().toISOString().slice(0, 10), intervalMiles: 3000, intervalMonths: 3, notes: "" },
-  labor: 0, taxRate: 0, paymentMethod: "Pending", notes: "",
+  labor: 0, travelDistanceMilesOneWay: 0, travelRatePerMile: TRAVEL_RATE_PER_MILE, taxRate: 0, paymentMethod: "Pending", notes: "",
 };
 
 export default function WorkOrders() {
@@ -57,7 +63,7 @@ export default function WorkOrders() {
   }, [searchParams, customers, vehicles]);
 
   const customerVehicles = useMemo(() => vehicles.filter((vehicle) => (vehicle.customer?._id || vehicle.customer) === form.customer), [vehicles, form.customer]);
-  const subtotal = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0), [form]);
+  const subtotal = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0) + Number(form.labor || 0) + calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile), [form]);
   const partsCost = useMemo(() => form.services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.cost || 0), 0), [form]);
 
   function open(order = null) {
@@ -75,7 +81,7 @@ export default function WorkOrders() {
           intervalMonths: order.oilChange?.intervalMonths || 3,
           notes: order.oilChange?.notes || "",
         },
-        labor: order.labor || 0, taxRate: order.taxRate || 0, paymentMethod: order.paymentMethod || "Pending", notes: order.notes || "",
+        labor: order.labor || 0, travelDistanceMilesOneWay: order.travelDistanceMilesOneWay || 0, travelRatePerMile: order.travelRatePerMile ?? TRAVEL_RATE_PER_MILE, taxRate: order.taxRate || 0, paymentMethod: order.paymentMethod || "Pending", notes: order.notes || "",
       });
     } else {
       const customer = customers[0]?._id || "";
@@ -226,6 +232,11 @@ export default function WorkOrders() {
               <label>Next interval months<input type="number" min="0" value={form.oilChange.intervalMonths} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, intervalMonths: Number(e.target.value) } })} /></label>
               <label className="span-2">Oil/filter notes<input value={form.oilChange.notes} onChange={(e) => setForm({ ...form, oilChange: { ...form.oilChange, notes: e.target.value } })} placeholder="5W-20, filter number, brand..." /></label>
             </div>}
+          </div>
+          <div className="span-2 service-editor">
+            <div className="service-heading"><strong>Mobile travel</strong><span>Round-trip charge at {money.format(form.travelRatePerMile)} per mile.</span></div>
+            <label>One-way road miles from shop<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(e) => setForm({ ...form, travelDistanceMilesOneWay: Number(e.target.value) })} /></label>
+            <p className="detail-empty">Round trip: {(Number(form.travelDistanceMilesOneWay || 0) * 2).toLocaleString()} mi · Travel charge: {money.format(calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile))}</p>
           </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(e) => setForm({ ...form, labor: Number(e.target.value) })} /></label>
           <label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: Number(e.target.value) })} /></label>
