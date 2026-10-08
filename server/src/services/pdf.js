@@ -62,7 +62,11 @@ function addInvoice(doc, record, options) {
   const services = Array.isArray(record.services) ? record.services : [];
   const serviceTotal = services.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0);
   const laborTotal = Number(record.labor || 0);
-  const subtotal = Number(record.subtotal ?? serviceTotal + laborTotal);
+  const travelMilesOneWay = Number(record.travelDistanceMilesOneWay || 0);
+  const travelRatePerMile = Number(record.travelRatePerMile ?? 2.5);
+  const travelRoundTripMiles = travelMilesOneWay * 2;
+  const travelFee = Math.round((travelRoundTripMiles * travelRatePerMile + Number.EPSILON) * 100) / 100;
+  const subtotal = Number(record.subtotal ?? serviceTotal + laborTotal + travelFee);
   const total = Number(record.total ?? subtotal);
   const tax = Math.max(0, total - subtotal);
   const payment = String(record.paymentMethod || "").toLowerCase();
@@ -92,7 +96,7 @@ function addInvoice(doc, record, options) {
 
   const tableY = 274;
   const tableBottom = 470;
-  const rows = Math.max(1, services.length + (laborTotal > 0 ? 1 : 0));
+  const rows = Math.max(1, services.length + (laborTotal > 0 ? 1 : 0) + (travelFee > 0 ? 1 : 0));
   const rowHeight = Math.max(12, Math.min(23, Math.floor((tableBottom - tableY - 27) / rows)));
   const fontSize = rowHeight < 16 ? 6.5 : 7.6;
   doc.roundedRect(44, tableY, 524, 24, 3).fill(navy);
@@ -103,7 +107,7 @@ function addInvoice(doc, record, options) {
   doc.text("PARTS", 422, tableY + 8, { width: 62, align: "right" });
   doc.text("TOTAL", 494, tableY + 8, { width: 62, align: "right" });
   let y = tableY + 31;
-  if (!services.length && !laborTotal) doc.font("Helvetica").fontSize(8).fillColor(muted).text("No services recorded", 90, y);
+  if (!services.length && !laborTotal && !travelFee) doc.font("Helvetica").fontSize(8).fillColor(muted).text("No services recorded", 90, y);
   services.forEach((item) => {
     const amount = Number(item.quantity || 0) * Number(item.price || 0);
     doc.font("Helvetica").fontSize(fontSize).fillColor(navy);
@@ -121,6 +125,14 @@ function addInvoice(doc, record, options) {
     doc.text(currency.format(laborTotal), 350, y, { width: 62, align: "right", lineBreak: false });
     doc.text(currency.format(0), 422, y, { width: 62, align: "right", lineBreak: false });
     doc.text(currency.format(laborTotal), 494, y, { width: 62, align: "right", lineBreak: false });
+    y += rowHeight;
+  }
+  if (travelFee > 0) {
+    doc.font("Helvetica").fontSize(fontSize).fillColor(navy).text(travelRoundTripMiles.toLocaleString(), 52, y, { width: 30, align: "center", lineBreak: false });
+    doc.text(`Mobile travel (round trip @ ${currency.format(travelRatePerMile)}/mi)`, 90, y, { width: 250, lineBreak: false });
+    doc.text(currency.format(0), 350, y, { width: 62, align: "right", lineBreak: false });
+    doc.text(currency.format(0), 422, y, { width: 62, align: "right", lineBreak: false });
+    doc.text(currency.format(travelFee), 494, y, { width: 62, align: "right", lineBreak: false });
   }
 
   doc.font("Helvetica-Bold").fontSize(8).fillColor(navy).text("PAYMENT METHOD", 44, 492);
@@ -136,8 +148,8 @@ function addInvoice(doc, record, options) {
   const summaryX = 360;
   const summaryValueX = 494;
   doc.font("Helvetica-Bold").fontSize(8).fillColor(navy).text("SUMMARY", summaryX, 492);
-  [["Labor", laborTotal], ["Parts / Services", serviceTotal], ["Shop Supplies", 0], [`Tax (${Number(record.taxRate || 0)}%)`, tax]].forEach(([label, amount], index) => {
-    const rowY = 511 + index * 17;
+  [["Labor", laborTotal], ["Parts / Services", serviceTotal], ...(travelFee > 0 ? [["Travel fee", travelFee]] : []), ["Shop Supplies", 0], [`Tax (${Number(record.taxRate || 0)}%)`, tax]].forEach(([label, amount], index) => {
+    const rowY = 507 + index * 14;
     doc.font("Helvetica").fontSize(8).fillColor(muted).text(label, summaryX, rowY, { width: 120 });
     doc.font("Helvetica").fillColor(navy).text(currency.format(amount), summaryValueX, rowY, { width: 74, align: "right" });
   });
