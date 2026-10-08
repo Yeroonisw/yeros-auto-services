@@ -87,6 +87,7 @@ function addInvoice(doc, record, options) {
   doc.font("Helvetica-Bold").fontSize(10).fillColor(navy).text(record.customer?.name || "-", 56, 197, { width: 225 });
   doc.font("Helvetica").fontSize(8).fillColor(muted).text(`Phone: ${record.customer?.phone || "-"}`, 56, 216);
   doc.text(`Email: ${record.customer?.email || "-"}`, 56, 232, { width: 225, lineBreak: false });
+  doc.font("Helvetica").fontSize(7).fillColor(muted).text(`Address: ${compactText(record.customer?.address || "-", 42)}`, 56, 247, { width: 230, lineBreak: false });
   doc.font("Helvetica-Bold").fontSize(8).fillColor(blue).text("VEHICLE", 318, 180);
   doc.font("Helvetica-Bold").fontSize(10).fillColor(navy)
     .text(`${record.vehicle?.year || ""} ${record.vehicle?.make || ""} ${record.vehicle?.model || ""}`.trim() || "-", 318, 197, { width: 238 });
