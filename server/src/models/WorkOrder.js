@@ -71,6 +71,7 @@ const workOrderSchema = new mongoose.Schema(
     sourceEstimate: { type: mongoose.Schema.Types.ObjectId, ref: "Estimate" },
     sourceInspection: { type: mongoose.Schema.Types.ObjectId, ref: "Inspection" },
     assignedTechnician: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    amountPaid: { type: Number, min: 0, default: 0, validate: { validator(value) { return Number(value || 0) <= Number(this.total || 0) + 0.01; }, message: "Amount paid cannot exceed the invoice total" } },
     paymentStatus: { type: String, enum: ["unpaid", "partial", "paid", "refunded"], default: "unpaid" },
   },
   {
@@ -111,6 +112,17 @@ workOrderSchema.virtual("partsCost").get(function partsCost() {
 
 workOrderSchema.virtual("grossProfit").get(function grossProfit() {
   return this.subtotal - this.partsCost;
+});
+
+workOrderSchema.pre("validate", async function updatePaymentStatus() {
+  if (this.paymentStatus === "refunded") return;
+  const amountPaid = Math.max(0, Number(this.amountPaid || 0));
+  const total = Math.round((Number(this.total || 0) + Number.EPSILON) * 100) / 100;
+  this.paymentStatus = amountPaid <= 0 ? "unpaid" : amountPaid + 0.005 >= total ? "paid" : "partial";
+});
+
+workOrderSchema.virtual("balanceDue").get(function balanceDue() {
+  return Math.max(0, Math.round((Number(this.total || 0) - Number(this.amountPaid || 0) + Number.EPSILON) * 100) / 100);
 });
 
 workOrderSchema.pre("validate", async function assignOrderNumber(next) {
