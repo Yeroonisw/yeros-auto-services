@@ -235,7 +235,7 @@ export default function WorkOrders() {
           </div>
           <div className="span-2 service-editor">
             <div className="service-heading"><strong>Mobile travel</strong><span>Round-trip charge at {money.format(form.travelRatePerMile)} per mile.</span></div>
-            <label>One-way road distance (mi)<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(e) => setForm({ ...form, travelDistanceMilesOneWay: Number(e.target.value) })} /></label>
+            <label>One-way road miles from shop<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(e) => setForm({ ...form, travelDistanceMilesOneWay: Number(e.target.value) })} /></label>
             <p className="detail-empty">Round trip: {(Number(form.travelDistanceMilesOneWay || 0) * 2).toLocaleString()} mi · Travel charge: {money.format(calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile))}</p>
           </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(e) => setForm({ ...form, labor: Number(e.target.value) })} /></label>
