@@ -43,6 +43,7 @@ function orderToForm(order) {
     travelRatePerMile: order.travelRatePerMile ?? TRAVEL_RATE_PER_MILE,
     taxRate: order.taxRate || 0,
     paymentMethod: order.paymentMethod || "Pending",
+    amountPaid: Number(order.amountPaid || 0),
     notes: order.notes || "",
   };
 }
@@ -123,6 +124,11 @@ export default function WorkOrderDetail() {
 
   async function saveOrder(event) {
     event.preventDefault();
+    const invoiceTotal = subtotal * (1 + Number(form.taxRate || 0) / 100);
+    if (Number(form.amountPaid || 0) > invoiceTotal + 0.005) {
+      setError("Amount paid cannot exceed the invoice total.");
+      return;
+    }
     setSavingOrder(true);
     setError("");
     try {
@@ -176,6 +182,7 @@ export default function WorkOrderDetail() {
         <form className="form-grid" onSubmit={saveOrder}>
           <label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label>Payment method<select value={form.paymentMethod} onChange={(event) => setForm({ ...form, paymentMethod: event.target.value })}>{paymentMethods.map((method) => <option key={method} value={method}>{method}</option>)}</select></label>
+          <label>Amount paid to date ($)<input type="number" min="0" step="0.01" value={form.amountPaid} onChange={(event) => setForm({ ...form, amountPaid: Number(event.target.value) })} /></label>
           <div className="span-2 service-editor">
             <div className="service-heading">
               <strong>Services and parts</strong>
@@ -221,7 +228,8 @@ export default function WorkOrderDetail() {
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(event) => setForm({ ...form, labor: Number(event.target.value) })} /></label>
           <label>Tax rate (%)<input type="number" min="0" max="100" step="0.01" value={form.taxRate} onChange={(event) => setForm({ ...form, taxRate: Number(event.target.value) })} /></label>
           <label className="span-2">Notes<textarea rows="4" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
-          <div className="order-total span-2"><span>Total</span><strong>{money.format(subtotal * (1 + Number(form.taxRate || 0) / 100))}</strong></div>
+          <div className="order-total span-2"><span>Invoice total</span><strong>{money.format(invoiceTotal)}</strong></div>
+          <div className="profit-preview span-2"><span>Paid: <strong>{money.format(form.amountPaid || 0)}</strong></span><span>Balance due: <strong>{money.format(Math.max(0, invoiceTotal - Number(form.amountPaid || 0)))}</strong></span></div>
           <div className="profit-preview span-2"><span>Parts cost: <strong>{money.format(partsCost)}</strong></span><span>Gross profit before overhead: <strong>{money.format(subtotal - partsCost)}</strong></span></div>
           <div className="form-actions span-2"><button type="button" className="button secondary" onClick={closeEditor}>Cancel</button><button className="button primary" disabled={savingOrder}><Save size={16} /> {savingOrder ? "Saving..." : "Save changes"}</button></div>
         </form>
@@ -266,6 +274,8 @@ export default function WorkOrderDetail() {
             <div><span>Subtotal</span><strong>{money.format(order.subtotal)}</strong></div>
             <div><span>Tax ({order.taxRate}%)</span><strong>{money.format(order.total - order.subtotal)}</strong></div>
             <div className="grand-total"><span>Total</span><strong>{money.format(order.total)}</strong></div>
+            <div><span>Paid</span><strong>{money.format(order.amountPaid || 0)}</strong></div>
+            <div className="grand-total"><span>Balance due</span><strong>{money.format(order.balanceDue ?? Math.max(0, order.total - Number(order.amountPaid || 0)))}</strong></div>
           </div>
         </section>
         <aside className="detail-side">
@@ -299,7 +309,12 @@ export default function WorkOrderDetail() {
           </section>
           <section className="panel detail-section">
             <div className="panel-heading"><h2>Payment method</h2><p>Printed on the customer invoice.</p></div>
-            <p className="detail-notes"><strong>{order.paymentMethod || "Pending"}</strong></p>
+            <div className="finance-breakdown">
+              <div><span>Payment method</span><strong>{order.paymentMethod || "Pending"}</strong></div>
+              <div><span>Payment status</span><strong>{({ unpaid: "Balance due", partial: "Partially paid", paid: "Paid", refunded: "Refunded" })[order.paymentStatus] || "Balance due"}</strong></div>
+              <div><span>Paid</span><strong>{money.format(order.amountPaid || 0)}</strong></div>
+              <div className="profit-row"><span>Balance due</span><strong>{money.format(order.balanceDue ?? Math.max(0, order.total - Number(order.amountPaid || 0)))}</strong></div>
+            </div>
           </section>
           {order.sourceEstimate && <section className="source-estimate">Created from estimate <strong>{order.sourceEstimate.estimateNumber}</strong></section>}
         </aside>
