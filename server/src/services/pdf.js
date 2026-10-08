@@ -69,6 +69,9 @@ function addInvoice(doc, record, options) {
   const subtotal = Number(record.subtotal ?? serviceTotal + laborTotal + travelFee);
   const total = Number(record.total ?? subtotal);
   const tax = Math.max(0, total - subtotal);
+  const amountPaid = Math.min(total, Math.max(0, Number(record.amountPaid || 0)));
+  const balanceDue = Math.max(0, Math.round((total - amountPaid + Number.EPSILON) * 100) / 100);
+  const paymentStatus = record.paymentStatus === "refunded" ? "REFUNDED" : balanceDue <= 0 && total > 0 ? "PAID" : amountPaid > 0 ? "PARTIAL" : "BALANCE DUE";
   const payment = String(record.paymentMethod || "").toLowerCase();
 
   addBusinessHeader(doc, "INVOICE", options.number, options.date);
@@ -79,7 +82,7 @@ function addInvoice(doc, record, options) {
   doc.font("Helvetica-Bold").fontSize(7).fillColor(muted).text("DUE DATE", 360, 126);
   doc.font("Helvetica").fontSize(9).fillColor(navy).text(formatDate(record.promisedAt, "Due upon receipt"), 360, 139, { width: 125 });
   doc.roundedRect(500, 124, 68, 28, 4).fill(blue);
-  doc.font("Helvetica-Bold").fontSize(8).fillColor("#ffffff").text(options.status || "OPEN", 504, 134, { width: 60, align: "center", lineBreak: false });
+  doc.font("Helvetica-Bold").fontSize(7).fillColor("#ffffff").text(paymentStatus, 502, 134, { width: 64, align: "center", lineBreak: false });
 
   doc.roundedRect(44, 168, 250, 88, 5).lineWidth(0.7).strokeColor(line).stroke();
   doc.roundedRect(306, 168, 262, 88, 5).lineWidth(0.7).strokeColor(line).stroke();
@@ -149,13 +152,22 @@ function addInvoice(doc, record, options) {
   const summaryX = 360;
   const summaryValueX = 494;
   doc.font("Helvetica-Bold").fontSize(8).fillColor(navy).text("SUMMARY", summaryX, 492);
-  [["Labor", laborTotal], ["Parts / Services", serviceTotal], ...(travelFee > 0 ? [["Travel fee", travelFee]] : []), ["Shop Supplies", 0], [`Tax (${Number(record.taxRate || 0)}%)`, tax]].forEach(([label, amount], index) => {
-    const rowY = 507 + index * 14;
-    doc.font("Helvetica").fontSize(8).fillColor(muted).text(label, summaryX, rowY, { width: 120 });
-    doc.font("Helvetica").fillColor(navy).text(currency.format(amount), summaryValueX, rowY, { width: 74, align: "right" });
+  const summaryRows = [
+    ["Services & parts", serviceTotal],
+    ["Labor", laborTotal],
+    ...(travelFee > 0 ? [["Mobile travel", travelFee]] : []),
+    ["Subtotal", subtotal],
+    [`Tax (${Number(record.taxRate || 0)}%)`, tax],
+    ["Amount paid", amountPaid],
+    ["Balance due", balanceDue],
+  ];
+  summaryRows.forEach(([label, amount], index) => {
+    const rowY = 504 + index * 10.5;
+    doc.font(label === "Balance due" ? "Helvetica-Bold" : "Helvetica").fontSize(7.2).fillColor(label === "Balance due" ? navy : muted).text(label, summaryX, rowY, { width: 124, lineBreak: false });
+    doc.font(label === "Balance due" ? "Helvetica-Bold" : "Helvetica").fontSize(7.2).fillColor(navy).text(currency.format(amount), summaryValueX, rowY, { width: 74, align: "right", lineBreak: false });
   });
   doc.roundedRect(summaryX, 579, 208, 34, 4).fill(blue);
-  doc.font("Helvetica-Bold").fontSize(10).fillColor("#ffffff").text("TOTAL", summaryX + 12, 591);
+  doc.font("Helvetica-Bold").fontSize(10).fillColor("#ffffff").text("INVOICE TOTAL", summaryX + 12, 591);
   doc.text(currency.format(total), summaryValueX, 591, { width: 62, align: "right" });
 
   doc.moveTo(44, 628).lineTo(568, 628).lineWidth(0.7).strokeColor(line).stroke();
