@@ -215,7 +215,7 @@ export default function WorkOrderDetail() {
           </div>
           <div className="span-2 service-editor">
             <div className="service-heading"><strong>Mobile travel</strong><span>Round-trip charge at {money.format(form.travelRatePerMile)} per mile.</span></div>
-            <label>One-way road distance (mi)<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(event) => setForm({ ...form, travelDistanceMilesOneWay: Number(event.target.value) })} /></label>
+            <label>One-way road miles from shop<input type="number" min="0" step="0.1" value={form.travelDistanceMilesOneWay} onChange={(event) => setForm({ ...form, travelDistanceMilesOneWay: Number(event.target.value) })} /></label>
             <p className="detail-empty">Round trip: {(Number(form.travelDistanceMilesOneWay || 0) * 2).toLocaleString()} mi · Travel charge: {money.format(calculateTravelFee(form.travelDistanceMilesOneWay, form.travelRatePerMile))}</p>
           </div>
           <label>Labor<input type="number" min="0" step="0.01" value={form.labor} onChange={(event) => setForm({ ...form, labor: Number(event.target.value) })} /></label>
@@ -246,7 +246,7 @@ export default function WorkOrderDetail() {
         </div>
       </section>
       <section className="detail-summary-grid">
-        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}</small></article>
+        <article><UserRound /><span>Customer</span><strong>{order.customer?.name}</strong><small>{order.customer?.phone}<br />{order.customer?.email}{order.customer?.address && <><br />{order.customer.address}</>}</small></article>
         <article><CarFront /><span>Vehicle</span><strong>{order.vehicle?.year} {order.vehicle?.make} {order.vehicle?.model}</strong><small>{order.vehicle?.plate || "No plate"} - {Number(order.vehicle?.mileage || 0).toLocaleString()} mi</small></article>
         <article><Hash /><span>VIN</span><strong>{order.vehicle?.vin || "Not recorded"}</strong><small>{order.vehicle?.color || "Color not recorded"}</small></article>
         <article><CalendarDays /><span>Opened</span><strong>{new Date(order.openedAt).toLocaleDateString()}</strong><small>{order.completedAt ? `Completed ${new Date(order.completedAt).toLocaleDateString()}` : "Not completed"}</small></article>
