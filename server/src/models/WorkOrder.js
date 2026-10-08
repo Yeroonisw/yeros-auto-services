@@ -53,6 +53,8 @@ const workOrderSchema = new mongoose.Schema(
     qualityCheckedAt: Date,
     dtcCodes: { type: [dtcSchema], default: [] },
     labor: { type: Number, min: 0, default: 0 },
+    travelDistanceMilesOneWay: { type: Number, min: 0, default: 0 },
+    travelRatePerMile: { type: Number, min: 0, default: 2.5 },
     taxRate: { type: Number, min: 0, max: 100, default: 0 },
     paymentMethod: { type: String, trim: true, default: "Pending" },
     notes: { type: String, trim: true },
@@ -83,7 +85,16 @@ workOrderSchema.virtual("subtotal").get(function subtotal() {
   return services.reduce(
     (sum, item) => sum + Number(item?.quantity || 0) * Number(item?.price || 0),
     0,
-  ) + Number(this.labor || 0);
+  ) + Number(this.labor || 0) + Number(this.travelFee || 0);
+});
+
+workOrderSchema.virtual("travelRoundTripMiles").get(function travelRoundTripMiles() {
+  return Number(this.travelDistanceMilesOneWay || 0) * 2;
+});
+
+workOrderSchema.virtual("travelFee").get(function travelFee() {
+  const amount = Number(this.travelDistanceMilesOneWay || 0) * 2 * Number(this.travelRatePerMile ?? 2.5);
+  return Math.round((amount + Number.EPSILON) * 100) / 100;
 });
 
 workOrderSchema.virtual("total").get(function total() {
