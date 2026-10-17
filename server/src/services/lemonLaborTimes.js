@@ -75,7 +75,11 @@ function parseLaborRows(html, service) {
 
 export async function findLaborTimes({ year, make, model, engine, service }) {
   const rootHtml = await fetchPage(BASE);
-  const brand = anchors(rootHtml, BASE).find((item) => normalize(item.label) === normalize(make));
+  const requestedMake = normalize(make);
+  const brand = anchors(rootHtml, BASE).find((item) => {
+    const listedMake = normalize(item.label);
+    return listedMake === requestedMake || listedMake.startsWith(`${requestedMake} `) || requestedMake.startsWith(`${listedMake} `);
+  });
   if (!brand) throw new Error(`No encontré la marca ${make} en Lemon Manuals.`);
 
   const yearUrl = new URL(`${Number(year)}/`, brand.url.endsWith("/") ? brand.url : `${brand.url}/`).href;
