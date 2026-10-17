@@ -117,7 +117,7 @@ export default function WorkOrderDetail() {
   }
 
   function updateService(index, field, value) {
-    setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
+    setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value, ...(field === "description" ? { laborHours: 0, laborReference: "", laborSourceUrl: "" } : {}) } : item) });
   }
 
   async function lookupLaborTime(index) {
@@ -212,7 +212,7 @@ export default function WorkOrderDetail() {
             </div>
             <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Sale price</span><span>Part cost</span><span /></div>
             {form.services.map((item, index) => <div className="service-row" key={index}>
-              <input aria-label="Description" placeholder="Description" value={item.description} onChange={(event) => updateService(index, "description", event.target.value)} />
+              <input aria-label="Description" placeholder="Description" value={item.description} onChange={(event) => updateService(index, "description", event.target.value)} onBlur={() => lookupLaborTime(index)} />
               <input aria-label="Quantity" type="number" min="0" step="0.1" value={item.quantity} onChange={(event) => updateService(index, "quantity", Number(event.target.value))} />
               <input aria-label="Price" type="number" min="0" step="0.01" value={item.price} onChange={(event) => updateService(index, "price", Number(event.target.value))} />
               <input aria-label="Internal part cost" type="number" min="0" step="0.01" value={item.cost || 0} onChange={(event) => updateService(index, "cost", Number(event.target.value))} />
