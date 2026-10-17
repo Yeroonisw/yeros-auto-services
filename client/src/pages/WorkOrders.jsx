@@ -17,7 +17,7 @@ function calculateTravelFee(distanceMilesOneWay, ratePerMile = TRAVEL_RATE_PER_M
 }
 const blank = {
   customer: "", vehicle: "", status: "pending",
-  services: [{ description: "", quantity: 1, price: 0, cost: 0 }],
+  services: [{ description: "", quantity: 1, price: 0, cost: 0, laborHours: 0, laborReference: "", laborSourceUrl: "" }],
   dtcCodes: [{ code: "", description: "", status: "active" }],
   oilChange: { performed: false, mileage: 0, serviceDate: new Date().toISOString().slice(0, 10), intervalMiles: 3000, intervalMonths: 3, notes: "" },
   labor: 0, travelDistanceMilesOneWay: 0, travelRatePerMile: TRAVEL_RATE_PER_MILE, taxRate: 0, paymentMethod: "Pending", notes: "",
@@ -36,6 +36,7 @@ export default function WorkOrders() {
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const [readingReceipt, setReadingReceipt] = useState(false);
+  const [laborLookup, setLaborLookup] = useState({});
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [status, setStatus] = useState("");
@@ -71,7 +72,7 @@ export default function WorkOrders() {
     if (order) {
       setForm({
         customer: order.customer?._id || "", vehicle: order.vehicle?._id || "", status: order.status,
-        services: order.services.length ? order.services.map(({ description, quantity, price, cost }) => ({ description, quantity, price, cost: cost || 0 })) : [{ description: "", quantity: 1, price: 0, cost: 0 }],
+        services: order.services.length ? order.services.map((item) => ({ ...item, description: item.description || "", quantity: item.quantity || 1, price: item.price || 0, cost: item.cost || 0, laborHours: item.laborHours || 0, laborReference: item.laborReference || "", laborSourceUrl: item.laborSourceUrl || "" })) : [{ description: "", quantity: 1, price: 0, cost: 0, laborHours: 0, laborReference: "", laborSourceUrl: "" }],
         dtcCodes: order.dtcCodes?.length ? order.dtcCodes.map(({ code, description, status }) => ({ code, description, status })) : [{ code: "", description: "", status: "active" }],
         oilChange: {
           performed: Boolean(order.oilChange?.performed),
@@ -110,6 +111,26 @@ export default function WorkOrders() {
 
   function updateService(index, field, value) {
     setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
+  }
+
+  async function lookupLaborTime(index) {
+    const service = form.services[index];
+    if (!form.vehicle || !service?.description?.trim()) return;
+    setLaborLookup((current) => ({ ...current, [index]: { loading: true, matches: [], message: "" } }));
+    try {
+      const { data } = await api.get("/work-orders/labor-times", { params: { vehicleId: form.vehicle, service: service.description } });
+      if (data.matches?.length === 1) {
+        const match = data.matches[0];
+        setForm((current) => ({ ...current, services: current.services.map((item, itemIndex) => itemIndex === index ? { ...item, laborHours: match.hours, laborReference: match.operation, laborSourceUrl: data.manualUrl } : item) }));
+      }
+      setLaborLookup((current) => ({ ...current, [index]: { loading: false, matches: data.matches || [], message: data.message || "", manualUrl: data.manualUrl || "" } }));
+    } catch (requestError) {
+      setLaborLookup((current) => ({ ...current, [index]: { loading: false, matches: [], message: errorMessage(requestError) } }));
+    }
+  }
+
+  function selectLaborTime(index, result, match) {
+    setForm((current) => ({ ...current, services: current.services.map((item, itemIndex) => itemIndex === index ? { ...item, laborHours: match.hours, laborReference: match.operation, laborSourceUrl: result.manualUrl } : item) }));
   }
 
   async function importReceipt(event) {
@@ -201,7 +222,7 @@ export default function WorkOrders() {
               <strong>Services and parts</strong>
               <span className="line-actions">
                 <label className={`text-button file-action ${readingReceipt ? "disabled" : ""}`}>{readingReceipt ? "Reading..." : "Import receipt"}<input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" onChange={importReceipt} disabled={readingReceipt} /></label>
-                <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}>+ Add line</button>
+                <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0, laborHours: 0, laborReference: "", laborSourceUrl: "" }] })}>+ Add line</button>
               </span>
             </div>
             <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Sale price</span><span>Part cost</span><span /></div>
@@ -211,6 +232,12 @@ export default function WorkOrders() {
               <input aria-label="Price" type="number" min="0" step="0.01" value={item.price} onChange={(e) => updateService(index, "price", Number(e.target.value))} />
               <input aria-label="Internal part cost" type="number" min="0" step="0.01" value={item.cost || 0} onChange={(e) => updateService(index, "cost", Number(e.target.value))} />
               <button type="button" className="remove-line" onClick={() => setForm({ ...form, services: form.services.filter((_, i) => i !== index) })} disabled={form.services.length === 1}>x</button>
+              <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <button type="button" className="text-button" onClick={() => lookupLaborTime(index)} disabled={!form.vehicle || !item.description.trim() || laborLookup[index]?.loading}>{laborLookup[index]?.loading ? "Searching manual..." : "Find labor time in manual"}</button>
+                {item.laborHours > 0 && <span>{Number(item.laborHours).toFixed(1)} h · {item.laborReference} {item.laborSourceUrl && <a href={item.laborSourceUrl} target="_blank" rel="noreferrer">Source</a>}</span>}
+                {laborLookup[index]?.message && <small>{laborLookup[index].message}</small>}
+                {laborLookup[index]?.matches?.length > 1 && laborLookup[index].matches.map((match, matchIndex) => <button type="button" className="text-button" key={matchIndex} onClick={() => selectLaborTime(index, laborLookup[index], match)}>{match.operation} · {match.hours} h</button>)}
+              </div>
             </div>)}
           </div>
           <div className="span-2 service-editor">
