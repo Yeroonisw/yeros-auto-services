@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, CarFront, Download, Hash, Plus, Save, UserRound, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, CarFront, Clock3, Download, Hash, Plus, Save, UserRound, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -54,13 +54,18 @@ export default function WorkOrderDetail() {
   const [savingOrder, setSavingOrder] = useState(false);
   const [error, setError] = useState("");
   const [laborLookup, setLaborLookup] = useState({});
+  const [timeEntries, setTimeEntries] = useState([]);
 
   async function loadOrder() {
     try {
-      const { data } = await api.get(`/work-orders/${id}`);
+      const [{ data }, { data: laborData }] = await Promise.all([
+        api.get(`/work-orders/${id}`),
+        api.get(`/work-orders/${id}/labor-time`),
+      ]);
       setOrder(data);
       setStatus(data.status);
       setForm(orderToForm(data));
+      setTimeEntries(laborData.entries || []);
     } catch (requestError) {
       setError(errorMessage(requestError));
     }
@@ -302,6 +307,14 @@ export default function WorkOrderDetail() {
           </div>
         </section>
         <aside className="detail-side">
+          <section className="panel detail-section">
+            <div className="panel-heading"><h2>Repair time</h2><p>Manual estimate compared with mechanic timers.</p></div>
+            <div className="finance-breakdown">
+              <div><span>Manual estimate</span><strong>{order.services.reduce((sum, service) => sum + Number(service.laborHours || 0), 0).toFixed(1)} h</strong></div>
+              <div><span>Tracked time</span><strong>{(timeEntries.reduce((sum, entry) => sum + Number(entry.minutes || 0) + (!entry.clockOut ? Math.max(0, Math.round((Date.now() - new Date(entry.clockIn)) / 60000)) : 0), 0) / 60).toFixed(1)} h</strong></div>
+            </div>
+            <div className="time-list">{timeEntries.length ? timeEntries.map((entry) => <div key={entry._id}><span className={entry.clockOut ? "complete" : "live"}><Clock3 size={15} /></span><div><strong>{entry.technician?.name || "Mechanic"}</strong><small>{new Date(entry.clockIn).toLocaleString()}</small></div><b>{entry.clockOut ? `${entry.minutes} min` : "Running"}</b></div>) : <p className="detail-empty">No tracked time yet. Start a timer from Mechanics & time.</p>}</div>
+          </section>
           {order.oilChange?.performed && <section className="panel detail-section">
             <div className="panel-heading"><h2>Oil change tracking</h2><p>This order updated the vehicle service reminder.</p></div>
             <div className="finance-breakdown">
