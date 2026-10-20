@@ -6,6 +6,9 @@ const serviceSchema = new mongoose.Schema(
     quantity: { type: Number, min: 0, default: 1 },
     price: { type: Number, min: 0, default: 0 },
     cost: { type: Number, min: 0, default: 0 },
+    laborHours: { type: Number, min: 0, default: 0 },
+    laborReference: { type: String, trim: true, default: "" },
+    laborSourceUrl: { type: String, trim: true, default: "" },
   },
   { _id: false },
 );

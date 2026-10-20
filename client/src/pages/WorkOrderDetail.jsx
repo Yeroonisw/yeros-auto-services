@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, CarFront, Download, Hash, Plus, Save, UserRound, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, CarFront, Clock3, Download, Hash, Plus, Save, UserRound, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -19,12 +19,7 @@ function orderToForm(order) {
     customer: order.customer?._id || order.customer || "",
     vehicle: order.vehicle?._id || order.vehicle || "",
     status: order.status || "pending",
-    services: order.services?.length ? order.services.map(({ description, quantity, price, cost }) => ({
-      description: description || "",
-      quantity: quantity || 1,
-      price: price || 0,
-      cost: cost || 0,
-    })) : [{ description: "", quantity: 1, price: 0, cost: 0 }],
+    services: order.services?.length ? order.services.map((item) => ({ ...item, description: item.description || "", quantity: item.quantity || 1, price: item.price || 0, cost: item.cost || 0, laborHours: item.laborHours || 0, laborReference: item.laborReference || "", laborSourceUrl: item.laborSourceUrl || "" })) : [{ description: "", quantity: 1, price: 0, cost: 0, laborHours: 0, laborReference: "", laborSourceUrl: "" }],
     dtcCodes: order.dtcCodes?.length ? order.dtcCodes.map(({ code, description, status }) => ({
       code: code || "",
       description: description || "",
@@ -58,13 +53,19 @@ export default function WorkOrderDetail() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
   const [error, setError] = useState("");
+  const [laborLookup, setLaborLookup] = useState({});
+  const [timeEntries, setTimeEntries] = useState([]);
 
   async function loadOrder() {
     try {
-      const { data } = await api.get(`/work-orders/${id}`);
+      const [{ data }, { data: laborData }] = await Promise.all([
+        api.get(`/work-orders/${id}`),
+        api.get(`/work-orders/${id}/labor-time`),
+      ]);
       setOrder(data);
       setStatus(data.status);
       setForm(orderToForm(data));
+      setTimeEntries(laborData.entries || []);
     } catch (requestError) {
       setError(errorMessage(requestError));
     }
@@ -116,7 +117,27 @@ export default function WorkOrderDetail() {
   }
 
   function updateService(index, field, value) {
-    setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item) });
+    setForm({ ...form, services: form.services.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value, ...(field === "description" ? { laborHours: 0, laborReference: "", laborSourceUrl: "" } : {}) } : item) });
+  }
+
+  async function lookupLaborTime(index) {
+    const service = form.services[index];
+    if (!form.vehicle || !service?.description?.trim()) return;
+    setLaborLookup((current) => ({ ...current, [index]: { loading: true, matches: [], message: "" } }));
+    try {
+      const { data } = await api.get("/work-orders/labor-times", { params: { vehicleId: form.vehicle, service: service.description } });
+      if (data.matches?.length === 1) {
+        const match = data.matches[0];
+        setForm((current) => ({ ...current, services: current.services.map((item, itemIndex) => itemIndex === index ? { ...item, laborHours: match.hours, laborReference: match.operation, laborSourceUrl: data.manualUrl } : item) }));
+      }
+      setLaborLookup((current) => ({ ...current, [index]: { loading: false, matches: data.matches || [], message: data.message || "", manualUrl: data.manualUrl || "" } }));
+    } catch (requestError) {
+      setLaborLookup((current) => ({ ...current, [index]: { loading: false, matches: [], message: errorMessage(requestError) } }));
+    }
+  }
+
+  function selectLaborTime(index, result, match) {
+    setForm((current) => ({ ...current, services: current.services.map((item, itemIndex) => itemIndex === index ? { ...item, laborHours: match.hours, laborReference: match.operation, laborSourceUrl: result.manualUrl } : item) }));
   }
 
   function updateDtc(index, field, value) {
@@ -187,15 +208,21 @@ export default function WorkOrderDetail() {
           <div className="span-2 service-editor">
             <div className="service-heading">
               <strong>Services and parts</strong>
-              <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0 }] })}><Plus size={13} /> Add line</button>
+              <button type="button" className="text-button" onClick={() => setForm({ ...form, services: [...form.services, { description: "", quantity: 1, price: 0, cost: 0, laborHours: 0, laborReference: "", laborSourceUrl: "" }] })}><Plus size={13} /> Add line</button>
             </div>
             <div className="service-row service-labels"><span>Description</span><span>Qty</span><span>Sale price</span><span>Part cost</span><span /></div>
             {form.services.map((item, index) => <div className="service-row" key={index}>
-              <input aria-label="Description" placeholder="Description" value={item.description} onChange={(event) => updateService(index, "description", event.target.value)} />
+              <input aria-label="Description" placeholder="Description" value={item.description} onChange={(event) => updateService(index, "description", event.target.value)} onBlur={() => lookupLaborTime(index)} />
               <input aria-label="Quantity" type="number" min="0" step="0.1" value={item.quantity} onChange={(event) => updateService(index, "quantity", Number(event.target.value))} />
               <input aria-label="Price" type="number" min="0" step="0.01" value={item.price} onChange={(event) => updateService(index, "price", Number(event.target.value))} />
               <input aria-label="Internal part cost" type="number" min="0" step="0.01" value={item.cost || 0} onChange={(event) => updateService(index, "cost", Number(event.target.value))} />
               <button type="button" className="remove-line" onClick={() => setForm({ ...form, services: form.services.filter((_, itemIndex) => itemIndex !== index) })} disabled={form.services.length === 1}>x</button>
+              <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <button type="button" className="text-button" onClick={() => lookupLaborTime(index)} disabled={!form.vehicle || !item.description.trim() || laborLookup[index]?.loading}>{laborLookup[index]?.loading ? "Searching manual..." : "Find labor time in manual"}</button>
+                {item.laborHours > 0 && <span>{Number(item.laborHours).toFixed(1)} h · {item.laborReference} {item.laborSourceUrl && <a href={item.laborSourceUrl} target="_blank" rel="noreferrer">Source</a>}</span>}
+                {laborLookup[index]?.message && <small>{laborLookup[index].message}</small>}
+                {laborLookup[index]?.matches?.length > 1 && laborLookup[index].matches.map((match, matchIndex) => <button type="button" className="text-button" key={matchIndex} onClick={() => selectLaborTime(index, laborLookup[index], match)}>{match.operation} · {match.hours} h</button>)}
+              </div>
             </div>)}
           </div>
           <div className="span-2 service-editor">
@@ -266,7 +293,7 @@ export default function WorkOrderDetail() {
           <div className="detail-lines">
             <div className="detail-line heading"><span>Description</span><span>Qty</span><span>Price</span><span>Amount</span></div>
             {order.services.length ? order.services.map((service, index) => <div className="detail-line" key={index}>
-              <strong>{service.description}</strong><span>{service.quantity}</span><span>{money.format(service.price)}</span><span>{money.format(service.quantity * service.price)}</span>
+              <strong>{service.description}{service.laborHours > 0 && <small className="table-note">{Number(service.laborHours).toFixed(1)} h · {service.laborReference} {service.laborSourceUrl && <a href={service.laborSourceUrl} target="_blank" rel="noreferrer">Manual</a>}</small>}</strong><span>{service.quantity}</span><span>{money.format(service.price)}</span><span>{money.format(service.quantity * service.price)}</span>
             </div>) : <p className="detail-empty">No service lines recorded.</p>}
             {order.labor > 0 && <div className="detail-line labor"><strong>Labor</strong><span /><span /><span>{money.format(order.labor)}</span></div>}
             {Number(order.travelDistanceMilesOneWay || 0) > 0 && <div className="detail-line labor"><strong>Mobile travel (round trip)</strong><span>{(Number(order.travelDistanceMilesOneWay) * 2).toLocaleString()} mi</span><span>{money.format(order.travelRatePerMile ?? TRAVEL_RATE_PER_MILE)}/mi</span><span>{money.format(order.travelFee ?? calculateTravelFee(order.travelDistanceMilesOneWay, order.travelRatePerMile))}</span></div>}
@@ -280,6 +307,14 @@ export default function WorkOrderDetail() {
           </div>
         </section>
         <aside className="detail-side">
+          <section className="panel detail-section">
+            <div className="panel-heading"><h2>Repair time</h2><p>Manual estimate compared with mechanic timers.</p></div>
+            <div className="finance-breakdown">
+              <div><span>Manual estimate</span><strong>{order.services.reduce((sum, service) => sum + Number(service.laborHours || 0), 0).toFixed(1)} h</strong></div>
+              <div><span>Tracked time</span><strong>{(timeEntries.reduce((sum, entry) => sum + Number(entry.minutes || 0) + (!entry.clockOut ? Math.max(0, Math.round((Date.now() - new Date(entry.clockIn)) / 60000)) : 0), 0) / 60).toFixed(1)} h</strong></div>
+            </div>
+            <div className="time-list">{timeEntries.length ? timeEntries.map((entry) => <div key={entry._id}><span className={entry.clockOut ? "complete" : "live"}><Clock3 size={15} /></span><div><strong>{entry.technician?.name || "Mechanic"}</strong><small>{new Date(entry.clockIn).toLocaleString()}</small></div><b>{entry.clockOut ? `${entry.minutes} min` : "Running"}</b></div>) : <p className="detail-empty">No tracked time yet. Start a timer from Mechanics & time.</p>}</div>
+          </section>
           {order.oilChange?.performed && <section className="panel detail-section">
             <div className="panel-heading"><h2>Oil change tracking</h2><p>This order updated the vehicle service reminder.</p></div>
             <div className="finance-breakdown">

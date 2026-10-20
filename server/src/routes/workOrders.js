@@ -2,8 +2,10 @@ import express from "express";
 import WorkOrder from "../models/WorkOrder.js";
 import Customer from "../models/Customer.js";
 import Vehicle from "../models/Vehicle.js";
+import TimeEntry from "../models/TimeEntry.js";
 import { streamDocument } from "../services/pdf.js";
 import { recordAudit } from "../services/audit.js";
+import { findLaborTimes } from "../services/lemonLaborTimes.js";
 
 const router = express.Router();
 const populate = [
@@ -100,6 +102,38 @@ router.post("/", async (req, res, next) => {
     await syncVehicleFromWorkOrder(order);
     await recordAudit(req, "create", "WorkOrder", order, `Created work order ${order.orderNumber}`);
     res.status(201).json(await order.populate(populate));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/labor-times", async (req, res, next) => {
+  try {
+    const { vehicleId, service } = req.query;
+    if (!vehicleId || !String(service || "").trim()) return res.status(400).json({ message: "Choose a vehicle and enter a repair description." });
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) return res.status(404).json({ message: "Vehicle not found." });
+    const result = await findLaborTimes({
+      year: vehicle.year,
+      make: vehicle.make,
+      model: vehicle.model,
+      engine: vehicle.engine,
+      service: String(service).trim(),
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/:id/labor-time", async (req, res, next) => {
+  try {
+    const order = await WorkOrder.exists({ _id: req.params.id });
+    if (!order) return res.status(404).json({ message: "Work order not found" });
+    const entries = await TimeEntry.find({ workOrder: req.params.id })
+      .populate("technician", "name")
+      .sort({ clockIn: 1 });
+    res.json({ entries });
   } catch (error) {
     next(error);
   }
