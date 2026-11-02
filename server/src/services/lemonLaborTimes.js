@@ -75,16 +75,37 @@ function parseLaborRows(html, service) {
 }
 
 export async function findLaborTimes({ year, make, model, engine, service }) {
-  const rootHtml = await fetchPage(BASE);
-  const requestedMake = normalize(make);
-  const brand = anchors(rootHtml, BASE).find((item) => {
-    const listedMake = normalize(item.label);
-    return listedMake === requestedMake || listedMake.startsWith(`${requestedMake} `) || requestedMake.startsWith(`${listedMake} `);
-  });
-  if (!brand) throw new Error(`No encontré la marca ${make} en Lemon Manuals.`);
-
-  const yearUrl = new URL(`${Number(year)}/`, brand.url.endsWith("/") ? brand.url : `${brand.url}/`).href;
-  const yearHtml = await fetchPage(yearUrl);
+  const originalMake = String(make || "").trim();
+  const normalizedMake = normalize(originalMake);
+  const knownAliases = {
+    nissan: ["Nissan-Datsun"],
+    "mercedes benz": ["Mercedes Benz", "Mercedes-Benz"],
+    chevy: ["Chevrolet"],
+    vw: ["Volkswagen"],
+  };
+  const makeCandidates = [...new Set([
+    originalMake,
+    originalMake.replace(/-/g, " "),
+    ...(knownAliases[normalizedMake] || []),
+  ].filter(Boolean))];
+  let yearUrl = "";
+  let yearHtml = "";
+  let lastError;
+  for (const candidate of makeCandidates) {
+    const candidateYearUrl = new URL(`${encodeURIComponent(candidate)}/${Number(year)}/`, BASE).href;
+    try {
+      yearHtml = await fetchPage(candidateYearUrl);
+      yearUrl = candidateYearUrl;
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (!yearHtml) {
+    throw new Error(lastError
+      ? `No pude conectar con el manual ${year} ${originalMake}: ${lastError.message}`
+      : `No encontré la marca ${originalMake} en Lemon Manuals.`);
+  }
   const modelTerms = tokens(model);
   const engineTerms = tokens(engine || "");
   const variants = anchors(yearHtml, yearUrl).filter((item) => {
