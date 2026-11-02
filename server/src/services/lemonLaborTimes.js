@@ -31,12 +31,27 @@ function tokens(value) {
 }
 
 async function fetchPage(url) {
-  const response = await fetch(url, {
-    signal: AbortSignal.timeout(18000),
-    headers: { "user-agent": "YerosAutoServices/1.0 (labor-time lookup)", accept: "text/html" },
-  });
-  if (!response.ok) throw new Error(`LEMON Manuals returned HTTP ${response.status}`);
-  return response.text();
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(30000),
+        headers: {
+          "user-agent": "Mozilla/5.0 (compatible; YerosAutoServices/1.0; labor-time lookup)",
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "en-US,en;q=0.9",
+        },
+      });
+      if (!response.ok) throw new Error(`LEMON Manuals returned HTTP ${response.status}`);
+      return await response.text();
+    } catch (error) {
+      lastError = error;
+      if (attempt === 0 && error.message?.includes("HTTP ")) throw error;
+    }
+  }
+  const cause = lastError?.cause;
+  const details = [cause?.code, cause?.message || lastError?.message].filter(Boolean).join(": ");
+  throw new Error(`No se pudo leer Lemon Manuals después de 2 intentos: ${details || "error de red"}`, { cause: lastError });
 }
 
 function parseLaborRows(html, service) {
