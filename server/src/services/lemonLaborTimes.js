@@ -43,6 +43,7 @@ function parseLaborRows(html, service) {
   const terms = tokens(service);
   const results = [];
   const tableMatches = [...html.matchAll(/<table\b[^>]*>[\s\S]*?<\/table>/gi)];
+  if (!tableMatches.length && /<tr\b/i.test(html)) tableMatches.push({ 0: html, index: 0 });
   for (const tableMatch of tableMatches) {
     const table = tableMatch[0];
     const rowMatches = [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
@@ -98,7 +99,7 @@ export async function findLaborTimes({ year, make, model, engine, service }) {
   })).sort((a, b) => b.score - a.score || a.label.length - b.label.length);
   const vehiclePage = rankedVariants[0];
   const vehicleHtml = await fetchPage(vehiclePage.url);
-  const laborLink = anchors(vehicleHtml, vehiclePage.url).find((item) => normalize(item.label) === "labor times");
+  const laborLink = anchors(vehicleHtml, vehiclePage.url).find((item) => normalize(item.label).endsWith("labor times") || new URL(item.url).pathname.toLowerCase().endsWith("/labor%20times/"));
   if (!laborLink) throw new Error("Este manual no publica una sección Labor Times para la versión encontrada.");
 
   let laborUrl = laborLink.url;
