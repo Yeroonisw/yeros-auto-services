@@ -43,7 +43,7 @@ function parseLaborRows(html, service) {
   const terms = tokens(service);
   const results = [];
   const tableMatches = [...html.matchAll(/<table\b[^>]*>[\s\S]*?<\/table>/gi)];
-  if (!tableMatches.length && /<tr\\b/i.test(html)) tableMatches.push({ 0: html, index: 0 });
+  if (!tableMatches.length && /<tr\b/i.test(html)) tableMatches.push({ 0: html, index: 0 });
   for (const tableMatch of tableMatches) {
     const table = tableMatch[0];
     const rowMatches = [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
