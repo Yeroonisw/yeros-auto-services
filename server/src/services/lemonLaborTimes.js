@@ -98,7 +98,7 @@ export async function findLaborTimes({ year, make, model, engine, service }) {
   })).sort((a, b) => b.score - a.score || a.label.length - b.label.length);
   const vehiclePage = rankedVariants[0];
   const vehicleHtml = await fetchPage(vehiclePage.url);
-  const laborLink = anchors(vehicleHtml, vehiclePage.url).find((item) => normalize(item.label) === "labor times");
+  const laborLink = anchors(vehicleHtml, vehiclePage.url).find((item) => normalize(item.label).endsWith("labor times") || new URL(item.url).pathname.toLowerCase().endsWith("/labor%20times/"));
   if (!laborLink) throw new Error("Este manual no publica una sección Labor Times para la versión encontrada.");
 
   let laborUrl = laborLink.url;
