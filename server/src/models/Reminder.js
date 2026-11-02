@@ -4,7 +4,7 @@ const reminderSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["oil_change", "brakes", "appointment", "estimate", "invoice", "repair_follow_up", "custom"],
+      enum: ["oil_change", "brakes", "appointment", "estimate", "invoice", "repair_follow_up", "approval", "ready_pickup", "custom"],
       required: true,
       index: true,
     },

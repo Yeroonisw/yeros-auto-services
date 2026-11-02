@@ -13,10 +13,12 @@ export async function runAutomationCycle() {
   const now = new Date();
   const nextDay = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
-  const [appointments, estimates, followUps] = await Promise.all([
+  const [appointments, estimates, followUps, readyPickups, approvals] = await Promise.all([
     Appointment.find({ scheduledAt: { $gte: now, $lte: nextDay }, status: { $in: ["scheduled", "confirmed"] } }).populate("customer", "name phone email"),
     Estimate.find({ status: { $in: ["draft", "sent"] }, createdAt: { $lte: sevenDaysAgo } }).populate("customer", "name phone email"),
     WorkOrder.find({ status: "completed", completedAt: { $lte: sevenDaysAgo } }).populate("customer", "name phone email").sort({ completedAt: -1 }).limit(50),
+    WorkOrder.find({ workflowStage: "ready_pickup", status: { $nin: ["cancelled", "completed"] } }).populate("customer", "name phone email"),
+    WorkOrder.find({ workflowStage: "waiting_approval", status: { $nin: ["cancelled", "completed"] } }).populate("customer", "name phone email"),
   ]);
   for (const item of appointments) await ensureReminder({ type: "appointment", relatedId: item._id }, {
     type: "appointment", customer: item.customer._id, vehicle: item.vehicle, relatedModel: "Appointment", relatedId: item._id,
@@ -29,6 +31,14 @@ export async function runAutomationCycle() {
   for (const item of followUps) await ensureReminder({ type: "repair_follow_up", relatedId: item._id }, {
     type: "repair_follow_up", customer: item.customer._id, vehicle: item.vehicle, relatedModel: "WorkOrder", relatedId: item._id,
     title: "Post-repair follow-up", message: `Hello ${item.customer.name}, Yeros Auto Services is checking in after repair ${item.orderNumber}. Is everything running well?`, dueAt: new Date(item.completedAt.getTime() + 7 * 86400000),
+  });
+  for (const item of readyPickups) await ensureReminder({ type: "ready_pickup", relatedId: item._id }, {
+    type: "ready_pickup", customer: item.customer._id, vehicle: item.vehicle, relatedModel: "WorkOrder", relatedId: item._id,
+    title: "Vehicle ready for pickup", message: `Hello ${item.customer.name}, your vehicle is ready for pickup. Please contact Yeros Auto Services about repair ${item.orderNumber}.`, dueAt: now,
+  });
+  for (const item of approvals) await ensureReminder({ type: "approval", relatedId: item._id }, {
+    type: "approval", customer: item.customer._id, vehicle: item.vehicle, relatedModel: "WorkOrder", relatedId: item._id,
+    title: "Repair approval needed", message: `Hello ${item.customer.name}, we need your approval before continuing repair ${item.orderNumber}. Please contact Yeros Auto Services.`, dueAt: now,
   });
 
   if (!process.env.AUTOMATION_WEBHOOK_URL) return;

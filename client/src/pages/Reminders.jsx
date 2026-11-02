@@ -10,6 +10,8 @@ const typeInfo = {
   estimate: ["Estimate", ClipboardCheck],
   invoice: ["Invoice", Receipt],
   repair_follow_up: ["Repair follow-up", Check],
+  approval: ["Approval needed", ClipboardCheck],
+  ready_pickup: ["Ready for pickup", BellRing],
   custom: ["Reminder", BellRing],
 };
 
@@ -41,11 +43,11 @@ export default function Reminders() {
   return <div className="page business-module reminders-page">
     <Alert message={error} onClose={() => setError("")} />
     {notice && <div className="success-banner"><Check />{notice}</div>}
-    <header className="module-hero"><div><span className="eyebrow">Automatic follow-up</span><h1>Customer reminders</h1><p>Oil changes, appointments, estimates, invoices and post-repair care in one queue.</p></div><span className="hero-count"><BellRing />{data?.items?.length || 0}</span></header>
+    <header className="module-hero"><div><span className="eyebrow">Automatic follow-up</span><h1>Customer reminders</h1><p>Oil changes, appointments, approvals, pickup alerts, invoices and follow-up in one queue.</p></div><span className="hero-count"><BellRing />{data?.items?.length || 0}</span></header>
     {data ? <>
       <section className={`automation-banner ${automation?.webhookConfigured ? "connected" : ""}`}><span><BellRing /></span><div><strong>{automation?.webhookConfigured ? "Automatic messaging connected" : "Smart queue active"}</strong><p>{automation?.webhookConfigured ? "Messages can be dispatched automatically through the configured provider." : "WhatsApp opens with each message prepared. Connect an automation webhook for unattended delivery."}</p></div><b>{automation?.webhookConfigured ? "Connected" : "Manual send"}</b></section>
       <section className="reminder-filters">
-        {[["all", "All", data.items.length], ["oil_change", "Oil", data.counts.oil], ["appointment", "Appointments", data.counts.appointments], ["estimate", "Estimates", data.counts.estimates], ["invoice", "Invoices", data.counts.invoices], ["repair_follow_up", "Follow-ups", data.counts.followUps]].map(([value, label, count]) =>
+        {[["all", "All", data.items.length], ["oil_change", "Oil", data.counts.oil], ["appointment", "Appointments", data.counts.appointments], ["estimate", "Estimates", data.counts.estimates], ["invoice", "Invoices", data.counts.invoices], ["repair_follow_up", "Follow-ups", data.counts.followUps], ["approval", "Approvals", data.items.filter((item) => item.type === "approval").length], ["ready_pickup", "Ready for pickup", data.items.filter((item) => item.type === "ready_pickup").length]].map(([value, label, count]) =>
           <button className={filter === value ? "active" : ""} onClick={() => setFilter(value)} key={value}>{label}<b>{count || 0}</b></button>)}
       </section>
       <section className="reminder-queue">{items.length ? items.map((item) => {
