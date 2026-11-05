@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowUpRight, BellRing, CalendarDays, CarFront, CheckCircle2, ChevronRight,
-  CircleDollarSign, ClipboardList, Clock3, FilePlus2, FileText, Plus, Sparkles,
-  TrendingDown, TrendingUp, UserPlus, UsersRound, Wrench,
-  AlertTriangle, BarChart3, CalendarCheck2, RefreshCw, UserCheck,
+  AlertTriangle, ArrowUpRight, BarChart3, BellRing, CalendarDays, CarFront, CheckCircle2,
+  ChevronRight, CircleDollarSign, ClipboardList, FilePlus2, FileText, PackageSearch,
+  Plus, RefreshCw, Sparkles, TrendingDown, TrendingUp, UserCheck, UsersRound, Wrench,
 } from "lucide-react";
 import api, { errorMessage } from "../api.js";
 import { Alert, Loading } from "../components/PageState.jsx";
@@ -14,9 +13,13 @@ const statusLabel = { pending: "Pending", in_progress: "In progress", completed:
 
 function Delta({ value, inverse = false }) {
   const number = Number(value || 0);
-  const good = inverse ? number <= 0 : number >= 0;
+  const positive = inverse ? number <= 0 : number >= 0;
   const Icon = number >= 0 ? TrendingUp : TrendingDown;
-  return <span className={good ? "command-delta good" : "command-delta bad"}><Icon />{Math.abs(number).toFixed(1)}%</span>;
+  return <span className={`template-delta ${positive ? "positive" : "negative"}`}><Icon />{Math.abs(number).toFixed(1)}%</span>;
+}
+
+function SectionHeading({ eyebrow, title, link, to }) {
+  return <header className="template-section-heading"><div><span>{eyebrow}</span><h2>{title}</h2></div>{link && <Link to={to}>{link}<ChevronRight /></Link>}</header>;
 }
 
 export default function Dashboard() {
@@ -39,8 +42,12 @@ export default function Dashboard() {
 
   const chart = useMemo(() => {
     const months = (data?.monthly || []).slice(0, 6).reverse();
-    const max = Math.max(...months.map((month) => month.revenue), 1);
-    return months.map((month) => ({ ...month, height: Math.max(7, (month.revenue / max) * 100), expenseHeight: Math.max(4, ((month.expenses || month.partsCost || 0) / max) * 100) }));
+    const max = Math.max(...months.map((month) => Number(month.revenue || 0)), 1);
+    return months.map((month) => ({
+      ...month,
+      height: Math.max(5, (Number(month.revenue || 0) / max) * 100),
+      expenseHeight: Math.max(3, (Number(month.expenses || month.partsCost || 0) / max) * 100),
+    }));
   }, [data]);
 
   if (!data && !error) return <div className="page"><Loading /></div>;
@@ -48,127 +55,102 @@ export default function Dashboard() {
   const current = data?.currentMonth || {};
   const reminders = data?.reminders || { oilChanges: [], estimates: [], total: 0 };
   const upcoming = data?.upcomingAppointments || [];
+  const profitRate = current.revenue ? Math.max(0, Math.min(100, ((current.grossProfit || 0) / current.revenue) * 100)) : 0;
+  const attention = [
+    ...(reminders.oilChanges || []).slice(0, 3).map((item) => ({ id: item._id, to: `/vehicles/${item._id}`, icon: BellRing, tone: item.status === "overdue" ? "danger" : "warning", title: item.vehicle, detail: `${item.customer?.name} · Oil change ${item.status === "overdue" ? "overdue" : "due soon"}` })),
+    ...(reminders.estimates || []).slice(0, 2).map((item) => ({ id: item._id, to: "/estimates", icon: FileText, tone: "info", title: item.estimateNumber, detail: `${item.customer?.name} · Open ${item.ageDays} days` })),
+    ...(data?.overdueOrders || []).slice(0, 2).map((item) => ({ id: item._id, to: `/work-orders/${item._id}`, icon: AlertTriangle, tone: "danger", title: item.orderNumber, detail: `${item.customer?.name} · Order overdue` })),
+    ...(data?.lowStock || []).slice(0, 2).map((item) => ({ id: item._id, to: "/inventory", icon: PackageSearch, tone: "warning", title: item.name, detail: `${item.quantity} left · reorder at ${item.minimumStock}` })),
+  ];
 
-  return <div className="page command-dashboard">
+  return <div className="page template-dashboard">
     <Alert message={error} onClose={() => setError("")} />
 
-    <section className="command-hero">
-      <div className="command-intro">
-        <p><span /> Live operations · {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-        <h1>Today at<br />Yeros.</h1>
-        <span>Everything that needs your attention, in one working view.</span>
+    <section className="template-welcome">
+      <div className="template-welcome-copy">
+        <span className="template-kicker"><Sparkles /> YEROS AUTO SERVICES · LIVE OVERVIEW</span>
+        <h1>Welcome back, Yeros <span>👋</span></h1>
+        <p>Here’s what’s happening in your shop today.</p>
+        <div className="template-welcome-meta"><span><i /> Operations online</span><span>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span></div>
       </div>
-      <div className="command-actions">
-        <Link to="/work-orders"><FilePlus2 />New work order</Link>
-        <Link to="/appointments"><CalendarDays />Book service</Link>
-        <Link to="/customers"><UserPlus />Add customer</Link>
-        <button onClick={() => load(true)} disabled={refreshing}><RefreshCw className={refreshing ? "spin" : ""} />Refresh</button>
+      <div className="template-welcome-actions">
+        <button onClick={() => load(true)} disabled={refreshing}><RefreshCw className={refreshing ? "spin" : ""} /> Refresh data</button>
+        <Link to="/work-orders"><FilePlus2 /> New work order <ArrowUpRight /></Link>
       </div>
-      <aside className="daily-pulse">
-        <header><span>Daily pulse</span><Sparkles /></header>
-        <div className="pulse-main"><span>Sales this month</span><strong>{money.format(current.revenue || 0)}</strong><Delta value={data?.comparison?.revenue} /></div>
-        <div className="pulse-row"><div><CalendarDays /><span>Today</span><strong>{data?.todayAppointments || 0}</strong></div><div><BellRing /><span>Follow-ups</span><strong>{reminders.total || 0}</strong></div></div>
-      </aside>
     </section>
 
-    <section className="command-layout">
-      <main className="command-main">
-        <section className="metric-ribbon">
-          <article><span className="metric-symbol coral"><UsersRound /></span><div><small>Customers</small><strong>{data?.customers || 0}</strong></div><ArrowUpRight /></article>
-          <article><span className="metric-symbol sage"><CarFront /></span><div><small>Vehicles</small><strong>{data?.vehicles || 0}</strong></div><ArrowUpRight /></article>
-          <article><span className="metric-symbol gold"><ClipboardList /></span><div><small>Active jobs</small><strong>{data?.activeOrders || 0}</strong></div><ArrowUpRight /></article>
-          <article><span className="metric-symbol dark"><CircleDollarSign /></span><div><small>Gross profit</small><strong>{money.format(current.grossProfit || 0)}</strong></div><Delta value={data?.comparison?.grossProfit} /></article>
-        </section>
-
-        <section className="period-performance">
-          {Object.entries(data?.sales || {}).map(([period, values]) => <article key={period}>
-            <span>{period}</span><strong>{money.format(values.revenue || 0)}</strong><small>{values.orders || 0} jobs · {money.format(values.netProfit ?? values.profit ?? 0)} net</small>
-          </article>)}
-        </section>
-
-        <section className="command-workbench">
-          <article className="command-card revenue-story">
-            <header><div><span>Performance</span><h2>Revenue rhythm</h2></div><div className="revenue-total"><small>Current month</small><strong>{money.format(current.revenue || 0)}</strong></div></header>
-            <div className="story-chart">{chart.length ? chart.map((month) => <div key={month.month}>
-              <span className="story-value">{money.format(month.revenue)}</span>
-              <div><i className="revenue-bar" style={{ height: `${month.height}%` }} /><i className="expense-bar" style={{ height: `${month.expenseHeight}%` }} /></div>
-              <small>{new Date(month.month + "-02").toLocaleDateString("en-US", { month: "short" })}</small>
-            </div>) : <div className="command-empty">Complete a work order to start the chart.</div>}</div>
-            <footer><span><i className="revenue-dot" /> Revenue</span><span><i className="expense-dot" /> Parts & expenses</span><span>{current.orders || 0} completed jobs this month</span></footer>
-          </article>
-
-          <article className="command-card next-stop">
-            <header><div><span>On the road</span><h2>Next stops</h2></div><Link to="/appointments">Full schedule <ChevronRight /></Link></header>
-            <div className="stop-list">{upcoming.length ? upcoming.slice(0, 4).map((appointment, index) => <Link to={`/appointments/${appointment._id}`} key={appointment._id}>
-              <span className="stop-line"><i />{index < upcoming.length - 1 && <b />}</span>
-              <span className="stop-time">{new Date(appointment.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
-              <div><strong>{appointment.title}</strong><small>{appointment.customer?.name}{appointment.location ? ` · ${appointment.location}` : ""}</small></div>
-              <ChevronRight />
-            </Link>) : <div className="command-empty">No appointments in the next seven days.</div>}</div>
-          </article>
-        </section>
-
-        <section className="business-insight-grid">
-          <article className="command-card pipeline-card">
-            <header><div><span>Appointment flow</span><h2>This month</h2></div><CalendarCheck2 /></header>
-            <div>{[["scheduled", "Pending"], ["confirmed", "Confirmed"], ["completed", "Completed"], ["cancelled", "Cancelled"]].map(([key, label]) => <div key={key}><span>{label}</span><strong>{data?.appointmentStatus?.[key] || 0}</strong><i style={{ width: `${Math.min(100, (data?.appointmentStatus?.[key] || 0) * 12)}%` }} /></div>)}</div>
-          </article>
-          <article className="command-card customer-mix">
-            <header><div><span>Customer health</span><h2>New vs. recurring</h2></div><UserCheck /></header>
-            <div><article><strong>{data?.customerSegments?.new || 0}</strong><span>New this month</span></article><article><strong>{data?.customerSegments?.recurring || 0}</strong><span>Recurring</span></article><article><strong>{data?.customerSegments?.oneTime || 0}</strong><span>One-time</span></article></div>
-          </article>
-        </section>
-
-        <section className="command-card recent-work">
-          <header><div><span>Workshop activity</span><h2>Recent work</h2></div><Link to="/work-orders">All work orders <ChevronRight /></Link></header>
-          {data?.recentOrders?.length ? <div className="recent-work-list">{data.recentOrders.map((order) => <Link to={`/work-orders/${order._id}`} key={order._id}>
-            <div className="work-order-mark"><Wrench /></div>
-            <div><strong>{order.orderNumber}</strong><small>{order.customer?.name}</small></div>
-            <div><strong>{order.vehicle ? `${order.vehicle.year} ${order.vehicle.make} ${order.vehicle.model}` : "Vehicle not set"}</strong><small>Vehicle</small></div>
-            <span className={`status ${order.status}`}>{statusLabel[order.status]}</span>
-            <b>{money.format(order.total || 0)}</b>
-            <ChevronRight />
-          </Link>)}</div> : <div className="command-empty">No work orders yet.</div>}
-        </section>
-      </main>
-
-      <aside className="command-rail">
-        <section className="priority-stack">
-          <header><div><span>Action center</span><h2>Needs attention</h2></div><strong>{reminders.total || 0}</strong></header>
-          <div>{reminders.oilChanges?.slice(0, 4).map((item) => <Link to={`/vehicles/${item._id}`} key={item._id}>
-            <span className={`priority-icon ${item.status}`}><BellRing /></span><div><strong>{item.vehicle}</strong><small>{item.customer?.name} · Oil change {item.status === "overdue" ? "overdue" : "due soon"}</small></div><ChevronRight />
-          </Link>)}
-          {reminders.estimates?.slice(0, 3).map((item) => <Link to="/estimates" key={item._id}>
-            <span className="priority-icon estimate"><FileText /></span><div><strong>{item.estimateNumber}</strong><small>{item.customer?.name} · Open {item.ageDays} days</small></div><ChevronRight />
-          </Link>)}
-          {data?.overdueOrders?.slice(0, 3).map((item) => <Link to={`/work-orders/${item._id}`} key={item._id}>
-            <span className="priority-icon overdue"><AlertTriangle /></span><div><strong>{item.orderNumber}</strong><small>{item.customer?.name} · Order overdue</small></div><ChevronRight />
-          </Link>)}
-          {!reminders.total && <div className="all-clear"><CheckCircle2 /><strong>All clear</strong><span>No follow-ups need attention.</span></div>}</div>
-        </section>
-
-        <section className="rail-finance">
-          <span>Money snapshot</span>
-          <div><small>Sales</small><strong>{money.format(current.revenue || 0)}</strong></div>
-          <div><small>Parts</small><strong>{money.format(current.partsCost || 0)}</strong></div>
-          <div className="profit"><small>Gross profit</small><strong>{money.format(current.grossProfit || 0)}</strong></div>
-          <div><small>Operating expenses</small><strong>{money.format(current.operatingExpenses || 0)}</strong></div>
-          <div className="profit"><small>Net profit</small><strong>{money.format(current.netProfit ?? current.grossProfit ?? 0)}</strong></div>
-          <p>Net profit includes recorded operating expenses.</p>
-        </section>
-
-        <section className="command-card service-leaders">
-          <header><div><span>Best performers</span><h2>Top services</h2></div></header>
-          <div>{data?.topServices?.length ? data.topServices.slice(0, 5).map((service, index) => <article key={service.name}>
-            <span>{String(index + 1).padStart(2, "0")}</span><div><strong>{service.name}</strong><small>{service.jobs} jobs · {money.format(service.profit || 0)} profit</small></div><b>{money.format(service.revenue)}</b>
-          </article>) : <div className="command-empty">No service data yet.</div>}</div>
-        </section>
-
-        <section className="quick-launch">
-          <span>Quick launch</span>
-          <div><Link to="/estimates"><Plus /><span>Estimate</span></Link><Link to="/scanner-reports"><Plus /><span>Scan</span></Link><Link to="/assistant"><Plus /><span>AI help</span></Link></div>
-        </section>
-      </aside>
+    <section className="template-stat-grid" aria-label="Shop summary">
+      <Link to="/customers" className="template-stat tone-violet"><span className="template-stat-icon"><UsersRound /></span><small>Customers</small><strong>{data?.customers || 0}</strong><span className="template-stat-foot">Customer records <ArrowUpRight /></span></Link>
+      <Link to="/vehicles" className="template-stat tone-teal"><span className="template-stat-icon"><CarFront /></span><small>Vehicles</small><strong>{data?.vehicles || 0}</strong><span className="template-stat-foot">In your shop <ArrowUpRight /></span></Link>
+      <Link to="/work-orders" className="template-stat tone-blue"><span className="template-stat-icon"><ClipboardList /></span><small>Active jobs</small><strong>{data?.activeOrders || 0}</strong><span className="template-stat-foot">Work in progress <ArrowUpRight /></span></Link>
+      <Link to="/finance" className="template-stat tone-amber"><span className="template-stat-icon"><CircleDollarSign /></span><small>Monthly sales</small><strong>{money.format(current.revenue || 0)}</strong><span className="template-stat-foot"><Delta value={data?.comparison?.revenue} /> vs. last month</span></Link>
+      <Link to="/finance" className="template-stat tone-green"><span className="template-stat-icon"><TrendingUp /></span><small>Gross profit</small><strong>{money.format(current.grossProfit || 0)}</strong><span className="template-stat-foot"><Delta value={data?.comparison?.grossProfit} /> vs. last month</span></Link>
+      <Link to="/reminders" className="template-stat tone-rose"><span className="template-stat-icon"><BellRing /></span><small>Needs attention</small><strong>{reminders.total || 0}</strong><span className="template-stat-foot">Follow-ups due <ArrowUpRight /></span></Link>
     </section>
+
+    <section className="template-dashboard-grid">
+      <article className="template-panel template-revenue-panel">
+        <SectionHeading eyebrow="PERFORMANCE" title="Revenue updates" link="Financial reports" to="/finance" />
+        <div className="template-chart-summary"><strong>{money.format(current.revenue || 0)}</strong><span>Revenue this month</span><Delta value={data?.comparison?.revenue} /></div>
+        <div className="template-revenue-chart">
+          <div className="template-y-axis"><span>{money.format(Math.max(0, Math.round((Math.max(...chart.map((item) => Number(item.revenue || 0)), 1)) / 1000) * 1000))}</span><span>75%</span><span>50%</span><span>25%</span><span>$0</span></div>
+          <div className="template-chart-columns">{chart.length ? chart.map((month) => <div className="template-chart-column" key={month.month}>
+            <div className="template-bar-track"><i className="template-expense-bar" style={{ height: `${month.expenseHeight}%` }} /><i className="template-revenue-bar" style={{ height: `${month.height}%` }} /></div>
+            <small>{new Date(`${month.month}-02`).toLocaleDateString("en-US", { month: "short" })}</small>
+          </div>) : <div className="template-chart-empty">Complete a work order to start tracking revenue.</div>}</div>
+        </div>
+        <footer className="template-chart-legend"><span><i className="legend-revenue" /> Revenue</span><span><i className="legend-expenses" /> Parts &amp; expenses</span><b>{current.orders || 0} completed jobs this month</b></footer>
+      </article>
+
+      <div className="template-side-stack">
+        <article className="template-panel template-breakup-panel">
+          <SectionHeading eyebrow="YEAR TO DATE" title="Profit breakup" link="View reports" to="/reports" />
+          <div className="template-breakup-content"><div className="template-donut" style={{ "--donut-fill": `${profitRate}%` }}><div><strong>{profitRate.toFixed(0)}%</strong><small>gross margin</small></div></div><div className="template-breakup-legend"><div><i className="legend-violet" /><span>Revenue</span><strong>{money.format(data?.sales?.year?.revenue || 0)}</strong></div><div><i className="legend-teal" /><span>Gross profit</span><strong>{money.format(current.grossProfit || 0)}</strong></div><div><i className="legend-muted" /><span>Parts cost</span><strong>{money.format(current.partsCost || 0)}</strong></div></div></div>
+        </article>
+        <article className="template-panel template-earnings-panel">
+          <SectionHeading eyebrow="THIS MONTH" title="Monthly earnings" />
+          <strong>{money.format(current.netProfit ?? current.grossProfit ?? 0)}</strong><span>Net profit after recorded expenses</span>
+          <div className="template-earnings-track"><i style={{ width: `${profitRate}%` }} /></div>
+          <div className="template-earnings-foot"><span>Sales <b>{money.format(current.revenue || 0)}</b></span><span>Expenses <b>{money.format(current.operatingExpenses || 0)}</b></span></div>
+        </article>
+      </div>
+    </section>
+
+    <section className="template-lower-grid">
+      <article className="template-panel template-activity-panel">
+        <SectionHeading eyebrow="WORKSHOP ACTIVITY" title="Recent work orders" link="All work orders" to="/work-orders" />
+        {data?.recentOrders?.length ? <div className="template-work-table-wrap"><table className="template-work-table"><thead><tr><th>Work order</th><th>Customer &amp; vehicle</th><th>Status</th><th>Total</th></tr></thead><tbody>{data.recentOrders.slice(0, 6).map((order) => <tr key={order._id}>
+          <td><Link to={`/work-orders/${order._id}`} className="template-order-link"><span><Wrench /></span><strong>{order.orderNumber}</strong></Link></td>
+          <td><strong>{order.customer?.name || "Customer"}</strong><small>{order.vehicle ? `${order.vehicle.year} ${order.vehicle.make} ${order.vehicle.model}` : "Vehicle not set"}</small></td>
+          <td><span className={`template-status ${order.status}`}>{statusLabel[order.status] || order.status}</span></td>
+          <td><b>{money.format(order.total || 0)}</b></td>
+        </tr>)}</tbody></table></div> : <div className="template-empty"><Wrench /><span>No work orders yet.</span></div>}
+      </article>
+
+      <article className="template-panel template-attention-panel">
+        <SectionHeading eyebrow="ACTION CENTER" title="Needs attention" link="View reminders" to="/reminders" />
+        <div className="template-attention-list">{attention.length ? attention.slice(0, 6).map((item) => { const Icon = item.icon; return <Link to={item.to} key={item.id}>
+          <span className={`template-attention-icon ${item.tone}`}><Icon /></span><span className="template-attention-copy"><strong>{item.title}</strong><small>{item.detail}</small></span><ChevronRight />
+        </Link>; }) : <div className="template-all-clear"><CheckCircle2 /><strong>All clear</strong><span>No follow-ups need attention.</span></div>}</div>
+      </article>
+    </section>
+
+    <section className="template-lower-grid">
+      <article className="template-panel template-schedule-panel">
+        <SectionHeading eyebrow="ON THE ROAD" title="Upcoming appointments" link="Full schedule" to="/appointments" />
+        <div className="template-appointment-list">{upcoming.length ? upcoming.slice(0, 4).map((appointment) => <Link to={`/appointments/${appointment._id}`} key={appointment._id}>
+          <span className="template-appointment-date"><CalendarDays /><small>{new Date(appointment.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small></span><span className="template-appointment-copy"><strong>{appointment.title}</strong><small>{appointment.customer?.name}{appointment.location ? ` · ${appointment.location}` : ""}</small></span><b>{new Date(appointment.scheduledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</b><ChevronRight />
+        </Link>) : <div className="template-empty"><CalendarDays /><span>No appointments in the next seven days.</span></div>}</div>
+      </article>
+
+      <article className="template-panel template-services-panel">
+        <SectionHeading eyebrow="BEST PERFORMERS" title="Top services" link="Reports" to="/reports" />
+        <div className="template-service-list">{data?.topServices?.length ? data.topServices.slice(0, 5).map((service, index) => <div key={service.name}>
+          <span className="template-service-rank">{String(index + 1).padStart(2, "0")}</span><span className="template-service-copy"><strong>{service.name}</strong><small>{service.jobs} jobs · {money.format(service.profit || 0)} profit</small></span><b>{money.format(service.revenue || 0)}</b>
+        </div>) : <div className="template-empty"><BarChart3 /><span>No service data yet.</span></div>}</div>
+      </article>
+    </section>
+
+    <nav className="template-quick-links" aria-label="Quick links"><span>QUICK ACCESS</span><Link to="/estimates"><Plus />New estimate</Link><Link to="/appointments"><CalendarDays />Book service</Link><Link to="/scanner-reports"><Plus />Import scan</Link><Link to="/assistant"><Sparkles />AI diagnostics</Link><Link to="/customers"><UserCheck />Add customer</Link></nav>
   </div>;
 }
