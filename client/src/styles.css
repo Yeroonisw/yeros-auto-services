@@ -3599,3 +3599,53 @@ textarea:focus {
   .fresh-admin .header-quick-button span { display:none!important; }
   .fresh-admin .template-dashboard { padding:16px 12px 32px!important; }
 }
+
+/* Final cleanup of dark dashboard remnants and legacy admin cards */
+.fresh-admin .template-stat-grid > .template-stat,
+.fresh-admin .template-dashboard-grid > .template-panel,
+.fresh-admin .template-side-stack > .template-panel,
+.fresh-admin .template-lower-grid > .template-panel,
+.fresh-admin .template-quick-links {
+  color:var(--admin-ink)!important; background:#fff!important; border-color:var(--admin-line)!important;
+  box-shadow:0 2px 8px #26395708!important;
+}
+.fresh-admin .template-chart-summary>strong,.fresh-admin .template-earnings-panel>strong,
+.fresh-admin .template-work-table td>strong,.fresh-admin .template-work-table td>b,
+.fresh-admin .template-work-table .template-order-link,.fresh-admin .template-work-table .template-order-link strong,
+.fresh-admin .template-attention-copy strong,.fresh-admin .template-appointment-copy strong,
+.fresh-admin .template-appointment-list>a>b,.fresh-admin .template-service-copy strong,
+.fresh-admin .template-service-list b,.fresh-admin .template-all-clear strong { color:#34435a!important; }
+.fresh-admin .template-chart-summary>span,.fresh-admin .template-earnings-panel>span,
+.fresh-admin .template-earnings-foot,.fresh-admin .template-work-table td>small,
+.fresh-admin .template-attention-copy small,.fresh-admin .template-appointment-copy small,
+.fresh-admin .template-appointment-date small,.fresh-admin .template-service-copy small,
+.fresh-admin .template-empty,.fresh-admin .template-all-clear,.fresh-admin .template-all-clear span { color:#8191a8!important; }
+.fresh-admin .template-section-heading>div>span,.fresh-admin .template-section-heading>a,
+.fresh-admin .template-service-rank,.fresh-admin .template-appointment-date { color:var(--admin-blue)!important; }
+.fresh-admin .template-chart-columns::before { background:repeating-linear-gradient(to bottom,transparent 0 calc(25% - 1px),#e9eef6 calc(25% - 1px) 25%)!important; }
+.fresh-admin .template-bar-track,.fresh-admin .template-earnings-track { background:#eef2f8!important; }
+.fresh-admin .template-donut>div { color:#34435a!important; background:#fff!important; }
+.fresh-admin .template-earnings-track i { background:linear-gradient(90deg,#5d87ff,#8aa8ff)!important; }
+.fresh-admin .template-expense-bar { background:#b7c6e8!important; }
+.fresh-admin .template-attention-list>a,.fresh-admin .template-appointment-list>a,
+.fresh-admin .template-service-list>div:not(.template-empty) { border-color:#edf1f6!important; }
+.fresh-admin .template-order-link>span { color:var(--admin-blue)!important; background:#edf3ff!important; }
+.fresh-admin .template-attention-icon,.fresh-admin .template-attention-icon.info,
+.fresh-admin .template-attention-icon.danger { color:#6886ca!important; background:#edf3ff!important; }
+.fresh-admin .template-status.completed { color:#18794e!important; background:#e7f6ef!important; }
+.fresh-admin .template-status.cancelled { color:#b5474f!important; background:#fff0f0!important; }
+.fresh-admin .business-kpis article,.fresh-admin .metric-ribbon article,
+.fresh-admin .period-performance article,.fresh-admin .summary-card,
+.fresh-admin .kpi-card,.fresh-admin .insight-card,.fresh-admin .stat-card,
+.fresh-admin .report-card,.fresh-admin .finance-card,.fresh-admin .workflow-card,
+.fresh-admin .vehicle-card,.fresh-admin .customer-card,.fresh-admin .technician-card {
+  color:#34435a!important; background:#fff!important; border:1px solid var(--admin-line)!important;
+  box-shadow:0 2px 8px #26395708!important;
+}
+.fresh-admin .business-kpis article strong,.fresh-admin .metric-ribbon strong,
+.fresh-admin .period-performance article>strong,.fresh-admin .summary-card strong,
+.fresh-admin .kpi-card strong,.fresh-admin .insight-card strong { color:#34435a!important; }
+.fresh-admin .business-kpis article small,.fresh-admin .metric-ribbon small,
+.fresh-admin .period-performance article small,.fresh-admin .summary-card small,
+.fresh-admin .kpi-card small,.fresh-admin .insight-card small { color:#8191a8!important; }
+.fresh-admin .status,.fresh-admin .badge { color:#5574b7!important; background:#edf3ff!important; }
